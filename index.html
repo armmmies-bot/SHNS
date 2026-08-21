@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดตารางเวรพยาบาล - Hospital Nurse Scheduling System</title>
+    <!-- Google Fonts for modern styling -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/webp" href="assets/hspmbz60021e231028112004.webp">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Parallax Background Layer -->
+    <div id="parallax-bg" class="parallax-bg"></div>
+    <div class="parallax-overlay"></div>
+
+    <!-- Notification Toast -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Header Navigation -->
+    <header class="main-header glass-panel hidden" id="main-header">
+        <div class="header-logo">
+            <img src="assets/hspmbz60021e231028112004.webp" alt="Sangkhlaburi Hospital Logo" class="logo-img">
+            <div class="logo-text">
+                <span class="logo-title">Sangkhlaburi Hospital Nurse Scheduling</span>
+                <span class="logo-subtitle">ระบบจัดเวรพยาบาลออนไลน์</span>
+            </div>
+        </div>
+        <div class="header-nav">
+            <button id="nav-btn-all" class="nav-btn active" onclick="app.showAllSchedule()"><i
+                    class="fa-solid fa-calendar-days"></i> ตารางเวรรวม</button>
+            <button id="nav-btn-admin-dash" class="nav-btn hidden" onclick="app.changeView('admin-dashboard')"><i
+                    class="fa-solid fa-chart-line"></i> แดชบอร์ดผู้ดูแลระบบ</button>
+            <button id="nav-btn-admin-reports" class="nav-btn hidden" onclick="app.changeView('admin-reports')"><i
+                    class="fa-solid fa-file-invoice"></i> หน้ารายงาน</button>
+            <button id="nav-btn-gsheet" class="nav-btn gsheet-nav-btn hidden" onclick="app.openModal('gsheet-modal')">
+                <i class="fa-solid fa-file-excel"></i> Google Sheet <span id="gsheet-status-badge" class="badge-status offline">Local</span>
+            </button>
+            <div class="dropdown room-dropdown" id="room-dropdown">
+                <button class="nav-btn dropdown-toggle" id="room-dropdown-btn">
+                    <i class="fa-solid fa-door-open"></i> เลือกแผนก <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <a href="#" class="dropdown-item" onclick="app.selectRoom('ห้องER')">ห้อง ER</a>
+                    <a href="#" class="dropdown-item" onclick="app.selectRoom('ห้องคลอด')">ห้องคลอด</a>
+                    <a href="#" class="dropdown-item" onclick="app.selectRoom('ห้องฉุกเฉิน')">ห้องฉุกเฉิน</a>
+                </div>
+            </div>
+        </div>
+        <div class="header-profile" id="user-profile-widget">
+            <!-- Populated dynamically -->
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="app-container">
+
+        <!-- 1. HOME SCREEN (LOGIN) -->
+        <section id="screen-login" class="screen-view active">
+            <div class="login-wrapper">
+                <div class="login-card glass-panel">
+                    <div class="login-header">
+                        <div class="brand-badge-logo">
+                            <img src="assets/hspmbz60021e231028112004.webp" alt="Sangkhlaburi Hospital Logo" class="login-logo-img">
+                        </div>
+                        <h1>Sangkhlaburi Hospital Nurse Scheduling</h1>
+                        <p class="tagline">ระบบบริหารจัดการและจัดตารางเวรพยาบาลส่วนกลาง</p>
+                    </div>
+
+                    <div class="login-options">
+                        <button class="login-opt-btn btn-staff" onclick="app.openModal('staff-login-modal')">
+                            <span class="btn-icon-wrapper"><i class="fa-solid fa-user-nurse"></i></span>
+                            <div class="btn-content">
+                                <span class="btn-title">Staff Login</span>
+                                <span class="btn-desc">สำหรับพยาบาลและเจ้าหน้าที่ผู้ปฏิบัติงาน</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                        </button>
+
+                        <button class="login-opt-btn btn-admin" onclick="app.openModal('admin-login-modal')">
+                            <span class="btn-icon-wrapper"><i class="fa-solid fa-user-tie"></i></span>
+                            <div class="btn-content">
+                                <span class="btn-title">Admin Login</span>
+                                <span class="btn-desc">สำหรับหัวหน้าหอผู้ป่วยและผู้ควบคุมตาราง</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                        </button>
+                    </div>
+
+                    <!-- GOOGLE SHEET DATABASE SYNC BAR -->
+                    <div class="gsheet-login-banner glass-panel-sm" onclick="app.openModal('gsheet-modal')">
+                        <div class="gsheet-banner-info">
+                            <i class="fa-solid fa-table gsheet-icon"></i>
+                            <div>
+                                <span class="banner-title">Google Sheets Database</span>
+                                <span class="banner-sub" id="login-gsheet-status-text">สถานะ: โหมดข้อมูลท้องถิ่น (Local Mode) - กดเพื่อตั้งค่า</span>
+                            </div>
+                        </div>
+                        <button class="btn-config-gsheet"><i class="fa-solid fa-gear"></i> ตั้งค่า</button>
+                    </div>
+
+                    <!-- TEMPORARY QUICK LOGIN SHORTCUTS -->
+                    <div class="quick-login-section">
+                        <div class="quick-login-header">
+                            <i class="fa-solid fa-bolt"></i> <span>ปุ่มลัดเข้าสู่ระบบชั่วคราว (Quick Login)</span>
+                        </div>
+                        
+                        <div class="quick-login-group">
+                            <div class="quick-group-title"><i class="fa-solid fa-user-nurse"></i> พนักงาน (Staff):</div>
+                            <div class="quick-buttons-row">
+                                <button type="button" class="quick-btn btn-staff-quick" onclick="app.quickLogin('staff', 'พี่เจม', 'เจมซ่า')">
+                                    <i class="fa-solid fa-right-to-bracket"></i> พี่เจม
+                                </button>
+                                <button type="button" class="quick-btn btn-staff-quick" onclick="app.quickLogin('staff', 'โต้', 'โต้โยต้า')">
+                                    <i class="fa-solid fa-right-to-bracket"></i> โต้
+                                </button>
+                                <button type="button" class="quick-btn btn-staff-quick" onclick="app.quickLogin('staff', 'ชมพู่', '1111')">
+                                    <i class="fa-solid fa-right-to-bracket"></i> ชมพู่
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="quick-login-group">
+                            <div class="quick-group-title"><i class="fa-solid fa-user-tie"></i> แอดมิน (Admin):</div>
+                            <div class="quick-buttons-row">
+                                <button type="button" class="quick-btn btn-admin-quick" onclick="app.quickLogin('admin', 'พี่บัว', 'เซล่ามูน')">
+                                    <i class="fa-solid fa-shield-halved"></i> พี่บัว
+                                </button>
+                                <button type="button" class="quick-btn btn-admin-quick" onclick="app.quickLogin('admin', 'พี่พลอย', 'ชาบู')">
+                                    <i class="fa-solid fa-shield-halved"></i> พี่พลอย
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="login-footer">
+                        <span class="app-version">v2.4.0 (Hospital Intranet Only)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. ROOM SELECTION & ALL SCHEDULE SCREEN (STAFF) -->
+        <section id="screen-room-selection" class="screen-view">
+            <div class="view-header">
+                <h2><i class="fa-solid fa-grip"></i> ตารางเวรปฏิบัติงานประจำเดือนพฤศจิกายน 2569</h2>
+                <p>แสดงตารางเวรรวมของเจ้าหน้าที่พยาบาลและวิชาชีพทั้งหมด 50 ท่าน</p>
+            </div>
+
+            <!-- Dashboard Stats Summary -->
+            <div class="stats-summary-grid">
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon m-shift"><i class="fa-solid fa-sun"></i></div>
+                    <div class="stat-info">
+                        <h3>เวรเช้า (ช)</h3>
+                        <p id="stat-m-count">0 เวร</p>
+                    </div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon a-shift"><i class="fa-solid fa-cloud-sun"></i></div>
+                    <div class="stat-info">
+                        <h3>เวรบ่าย (บ)</h3>
+                        <p id="stat-a-count">0 เวร</p>
+                    </div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon n-shift"><i class="fa-solid fa-moon"></i></div>
+                    <div class="stat-info">
+                        <h3>เวรดึก (ด)</h3>
+                        <p id="stat-n-count">0 เวร</p>
+                    </div>
+                </div>
+                <div class="stat-card glass-panel">
+                    <div class="stat-icon off-shift"><i class="fa-solid fa-mug-hot"></i></div>
+                    <div class="stat-info">
+                        <h3>วันหยุด (Off)</h3>
+                        <p id="stat-off-count">0 วัน</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Month Selector Pagination Container -->
+            <div class="month-selector-container"></div>
+
+            <!-- Central Schedule Grid Container -->
+            <div class="central-panel glass-panel">
+                <div class="panel-toolbar">
+                    <div class="legend-container">
+                        <span class="legend-item"><span class="legend-color room-er">ER</span> ห้อง ER (น้ำเงิน)</span>
+                        <span class="legend-item"><span class="legend-color room-delivery">คลอด</span> ห้องคลอด
+                            (ชมพู)</span>
+                        <span class="legend-item"><span class="legend-color room-accident">ฉุกเฉิน</span> ห้องฉุกเฉิน
+                            (เหลือง)</span>
+                        <span class="legend-item"><span class="legend-color off-shift">Off</span> วันหยุด (Off)</span>
+                    </div>
+                    <a href="print.html" target="_blank" class="print-page-btn">
+                        <i class="fa-solid fa-print"></i> พิมพ์ตารางเวรรวม
+                    </a>
+                </div>
+
+                <!-- Excel Grid -->
+                <div class="excel-grid-wrapper scrollbar-custom">
+                    <table class="excel-grid" id="excel-schedule-table">
+                        <thead>
+                            <!-- Populated via Javascript -->
+                        </thead>
+                        <tbody>
+                            <!-- Populated via Javascript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination Control -->
+                <div class="pagination-container" id="overview-pagination"></div>
+
+                <!-- Room Navigation Buttons at the Bottom -->
+                <div class="room-nav-section">
+                    <h3><i class="fa-solid fa-hospital"></i> ดูข้อมูลแยกตามห้องปฏิบัติงาน (แผนก)</h3>
+                    <div class="room-nav-buttons">
+                        <button class="room-nav-btn active" id="room-nav-all" onclick="app.showAllSchedule()">
+                            <i class="fa-solid fa-table-cells"></i> ห้องทั้งหมด
+                        </button>
+                        <button class="room-nav-btn btn-room-er" id="room-nav-er" onclick="app.selectRoom('ห้องER')">
+                            <i class="fa-solid fa-truck-medical"></i> ห้อง ER
+                        </button>
+                        <button class="room-nav-btn btn-room-delivery" id="room-nav-delivery"
+                            onclick="app.selectRoom('ห้องคลอด')">
+                            <i class="fa-solid fa-baby"></i> ห้องคลอด
+                        </button>
+                        <button class="room-nav-btn btn-room-accident" id="room-nav-accident"
+                            onclick="app.selectRoom('ห้องฉุกเฉิน')">
+                            <i class="fa-solid fa-kit-medical"></i> ห้องฉุกเฉิน
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. SPECIFIC ROOM VIEW -->
+        <section id="screen-specific-room" class="screen-view">
+            <div class="view-header flex-header">
+                <div>
+                    <h2 id="room-view-title"><i class="fa-solid fa-hospital-user"></i> แผนก: ห้อง ER</h2>
+                    <p>ตารางการปฏิบัติการของแผนกและฟอร์มขอแลกเปลี่ยนเวร</p>
+                </div>
+                <button class="back-to-all-btn" onclick="app.showAllSchedule()">
+                    <i class="fa-solid fa-arrow-left"></i> กลับไปหน้าภาพรวมทั้งหมด
+                </button>
+            </div>
+
+            <!-- Month Selector Container for Specific Room View -->
+            <div class="month-selector-container"></div>
+
+            <div class="specific-room-grid">
+                <!-- Top Section: Room Shift Schedule -->
+                <div class="room-schedule-panel glass-panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-calendar-day"></i> ตารางเวรรายวันแยกตามกะการทำงาน
+                            (Morning/Afternoon/Night)</h3>
+                        <p class="panel-desc">แสดงผู้ปฏิบัติหน้าที่ในแต่ละกะการทำงาน 30 วัน</p>
+                    </div>
+                    <div class="room-grid-table-wrapper scrollbar-custom">
+                        <table class="room-grid-table" id="room-shift-distribution-table">
+                            <thead>
+                                <tr>
+                                    <th width="15%">วันที่</th>
+                                    <th width="28%" class="m-header">เวรเช้า (ช)</th>
+                                    <th width="28%" class="a-header">เวรบ่าย (บ)</th>
+                                    <th width="28%" class="n-header">เวรดึก (ด)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination Control -->
+                    <div class="pagination-container" id="room-pagination"></div>
+                </div>
+
+                <!-- Bottom Section: Swap Request Form -->
+                <div class="swap-request-panel glass-panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-arrow-rotate-left"></i> ยื่นคำขอแลกเปลี่ยนเวรปฏิบัติงาน (Swap Request
+                            Form)</h3>
+                        <p class="panel-desc">
+                            ระบุรายละเอียดเวรของคุณที่ต้องการแลกและคู่แลกเปลี่ยนเพื่อส่งคำขอให้หัวหน้างานตรวจสอบ</p>
+                    </div>
+
+                    <form id="swap-request-form" onsubmit="app.handleSwapSubmit(event)" class="swap-form">
+                        <div class="form-row split">
+                            <div class="form-group">
+                                <label for="swap-my-shift"><i class="fa-solid fa-user-tag"></i>
+                                    เวรของคุณที่ต้องการแลกออก</label>
+                                <select id="swap-my-shift" required onchange="app.handleMyShiftChange()">
+                                    <option value="" disabled selected>-- เลือกเวรปฏิบัติงานของคุณ --</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="swap-partner"><i class="fa-solid fa-users"></i> เจ้าหน้าที่คู่แลกเวร</label>
+                                <select id="swap-partner" required onchange="app.handlePartnerChange()">
+                                    <option value="" disabled selected>-- เลือกคู่แลกเวร --</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row split">
+                            <div class="form-group">
+                                <label for="swap-partner-shift"><i class="fa-solid fa-calendar-check"></i>
+                                    เวรของคู่แลกที่คุณต้องการรับแทน</label>
+                                <select id="swap-partner-shift" required>
+                                    <option value="" disabled selected>-- เลือกเวรของคู่แลกเวร --</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="swap-admin"><i class="fa-solid fa-user-shield"></i> ผู้มีอำนาจอนุมัติ
+                                    (Admin)</label>
+                                <select id="swap-admin" required>
+                                    <option value="พี่บัว">พี่บัว</option>
+                                    <option value="พี่พลอย">พี่พลอย</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="swap-remarks"><i class="fa-solid fa-comment-dots"></i>
+                                เหตุผลและรายละเอียดการแลกเวร</label>
+                            <textarea id="swap-remarks" rows="3"
+                                placeholder="ระบุเหตุผล เช่น ติดภารกิจส่วนตัว, มีความจำเป็นทางครอบครัว..."
+                                required></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="submit-btn"><i class="fa-solid fa-paper-plane"></i>
+                                ส่งคำขอแลกเปลี่ยนเวร</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. ADMIN DASHBOARD -->
+        <section id="screen-admin-dashboard" class="screen-view">
+            <div class="view-header">
+                <h2><i class="fa-solid fa-chart-line"></i> แดชบอร์ดผู้ดูแลระบบ (Admin Dashboard)</h2>
+                <p>จัดการตารางเวร รายชื่อเจ้าหน้าที่พยาบาล และพิจารณาคำขออนุมัติแลกเวร</p>
+            </div>
+
+            <div class="admin-grid">
+                <!-- Staff List Panel -->
+                <div class="admin-panel glass-panel" id="admin-staff-list-panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-users-medical"></i> รายชื่อพยาบาลและเจ้าหน้าที่ (50 ท่าน)</h3>
+                        <p class="panel-desc">คลิกที่รายชื่อเพื่อตรวจสอบประวัติตารางเวรรายบุคคล</p>
+                    </div>
+                    <div class="admin-search-bar-row">
+                        <div class="admin-search-bar">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="admin-staff-search" placeholder="ค้นหาตามชื่อ..."
+                                onkeyup="app.filterAdminStaff()">
+                        </div>
+                        <button class="add-staff-btn" onclick="app.openModal('add-staff-modal')">
+                            <i class="fa-solid fa-user-plus"></i> เพิ่มพนักงานใหม่
+                        </button>
+                    </div>
+                    <div class="staff-list-wrapper scrollbar-custom">
+                        <ul class="staff-list" id="admin-staff-list">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Approval Requests Panel -->
+                <div class="admin-panel glass-panel" id="admin-requests-panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-clipboard-question"></i> รายการคำขอแลกเวรที่รอการพิจารณา</h3>
+                        <p class="panel-desc">คลิกที่คำขอการแลกเวรเพื่อดูรายละเอียดและตัดสินใจ อนุมัติ/ปฏิเสธ</p>
+                    </div>
+                    <div class="requests-queue-wrapper scrollbar-custom">
+                        <div class="requests-queue" id="admin-requests-queue">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. ADMIN REPORTS SCREEN -->
+        <section id="screen-admin-reports" class="screen-view">
+            <div class="view-header flex-header">
+                <div>
+                    <h2><i class="fa-solid fa-file-invoice"></i> หน้ารายงาน (Admin Reports)</h2>
+                    <p>ศูนย์รวมรายงานสรุปผลและการดำเนินงานต่างๆ ในระบบผู้ดูแลระบบ</p>
+                </div>
+            </div>
+
+            <!-- Reports Tab Navigation -->
+            <div class="reports-tabs-bar">
+                <button class="reports-tab-btn active" id="tab-report-swap">
+                    <i class="fa-solid fa-arrow-rotate-left"></i> รายงานการแลกภาระงาน
+                </button>
+            </div>
+
+            <!-- Report Card Container -->
+            <div class="reports-card glass-panel">
+                <div class="reports-card-header">
+                    <div class="reports-card-title-group">
+                        <h3><i class="fa-solid fa-clipboard-check"></i> รายงานการแลกภาระงานของพนักงาน</h3>
+                        <p class="panel-desc">แสดงข้อมูลการแลกภาระงานของพนักงานทุกคนที่ได้รับการอนุมัติจากผู้ดูแลระบบ</p>
+                    </div>
+                    <div class="reports-card-actions">
+                        <div class="admin-search-bar">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="admin-reports-search" placeholder="ค้นหาผู้ขอ, ผู้แลก หรือผู้อนุมัติ..."
+                                onkeyup="app.filterAdminReports()">
+                        </div>
+                        <button class="clear-report-btn" onclick="app.clearSwapReports()">
+                            <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลรายงาน
+                        </button>
+                        <a href="print_report.html" target="_blank" class="print-page-btn">
+                            <i class="fa-solid fa-print"></i> พิมพ์รายงาน
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Approved Swap Requests Report Table -->
+                <div class="reports-table-wrapper scrollbar-custom">
+                    <table class="reports-table" id="admin-swap-reports-table">
+                        <thead>
+                            <tr>
+                                <th width="22%"><i class="fa-solid fa-users"></i> 1. ผู้ขอ - ผู้แลก</th>
+                                <th width="32%"><i class="fa-solid fa-calendar-minus"></i> 2. ภาระงานก่อน (ภาระงานก่อนแลก)</th>
+                                <th width="32%"><i class="fa-solid fa-calendar-plus"></i> 3. ภาระงานหลัง (ภาระงานหลังแลก)</th>
+                                <th width="14%"><i class="fa-solid fa-user-shield"></i> 4. ผู้อนุมัติ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-swap-reports-tbody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+        <p>&copy; 2026 Sangkhlaburi Hospital Internal Scheduling System. โรงพยาบาลสังขละบุรี. สงวนลิขสิทธิ์.</p>
+    </footer>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- STAFF LOGIN MODAL -->
+    <div class="modal-overlay" id="staff-login-modal">
+        <div class="modal-card glass-panel anim-scale-up">
+            <button class="modal-close-btn" onclick="app.closeModal('staff-login-modal')">&times;</button>
+            <div class="modal-header">
+                <i class="fa-solid fa-user-nurse modal-icon"></i>
+                <h2>เข้าสู่ระบบสำหรับเจ้าหน้าที่</h2>
+                <p>กรุณากรอกข้อมูลประจำตัวของคุณเพื่อเข้าใช้งานระบบ</p>
+            </div>
+            <form onsubmit="app.handleLogin(event, 'staff')" class="modal-form">
+                <div class="form-group">
+                    <label for="staff-username">ชื่อเจ้าหน้าที่ (ภาษาไทย)</label>
+                    <input type="text" id="staff-username" placeholder="เช่น พี่เจม, โต้, ชมพู่" required
+                        autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="staff-password">รหัสผ่าน</label>
+                    <input type="password" id="staff-password" placeholder="••••••••" required
+                        autocomplete="current-password">
+                </div>
+                <button type="submit" class="modal-submit-btn">เข้าสู่ระบบ <i class="fa-solid fa-sign-in"></i></button>
+            </form>
+            <div class="modal-tip">
+                <p><strong><i class="fa-solid fa-bolt"></i> คลิกปุ่มลัดเพื่อกรอกรหัสและเข้าสู่ระบบทันที:</strong></p>
+                <div class="quick-chip-container">
+                    <button type="button" class="quick-chip btn-staff-chip" onclick="app.quickLogin('staff', 'พี่เจม', 'เจมซ่า')">⚡ พี่เจม (เจมซ่า)</button>
+                    <button type="button" class="quick-chip btn-staff-chip" onclick="app.quickLogin('staff', 'โต้', 'โต้โยต้า')">⚡ โต้ (โต้โยต้า)</button>
+                    <button type="button" class="quick-chip btn-staff-chip" onclick="app.quickLogin('staff', 'ชมพู่', '1111')">⚡ ชมพู่ (1111)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div class="modal-overlay" id="admin-login-modal">
+        <div class="modal-card glass-panel anim-scale-up">
+            <button class="modal-close-btn" onclick="app.closeModal('admin-login-modal')">&times;</button>
+            <div class="modal-header">
+                <i class="fa-solid fa-user-tie modal-icon admin-color"></i>
+                <h2>เข้าสู่ระบบสำหรับผู้ดูแลระบบ</h2>
+                <p>กรุณากรอกข้อมูลประสงค์สิทธิ์ควบคุมการจัดตารางเวร</p>
+            </div>
+            <form onsubmit="app.handleLogin(event, 'admin')" class="modal-form">
+                <div class="form-group">
+                    <label for="admin-username">ชื่อแอดมิน (ภาษาไทย)</label>
+                    <input type="text" id="admin-username" placeholder="เช่น พี่บัว, พี่พลอย" required
+                        autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="admin-password">รหัสผ่าน</label>
+                    <input type="password" id="admin-password" placeholder="••••••••" required
+                        autocomplete="current-password">
+                </div>
+                <button type="submit" class="modal-submit-btn admin-btn">เข้าสู่ระบบ <i
+                        class="fa-solid fa-lock-open"></i></button>
+            </form>
+            <div class="modal-tip">
+                <p><strong><i class="fa-solid fa-bolt"></i> คลิกปุ่มลัดเพื่อกรอกรหัสและเข้าสู่ระบบทันที:</strong></p>
+                <div class="quick-chip-container">
+                    <button type="button" class="quick-chip btn-admin-chip" onclick="app.quickLogin('admin', 'พี่บัว', 'เซล่ามูน')">⚡ พี่บัว (เซล่ามูน)</button>
+                    <button type="button" class="quick-chip btn-admin-chip" onclick="app.quickLogin('admin', 'พี่พลอย', 'ชาบู')">⚡ พี่พลอย (ชาบู)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STAFF INDIVIDUAL SCHEDULE DETAIL MODAL -->
+    <div class="modal-overlay" id="staff-detail-modal">
+        <div class="modal-card glass-panel xl-modal anim-scale-up">
+            <button class="modal-close-btn" onclick="app.closeModal('staff-detail-modal')">&times;</button>
+            <div class="modal-header flex-modal-header">
+                <div>
+                    <h2 id="detail-nurse-name">ตารางเวรรายบุคคล: พยาบาลสมศรี ดีใจ</h2>
+                    <p id="detail-nurse-dept">ฝ่ายงาน: แผนกห้องฉุกเฉิน</p>
+                </div>
+                <div class="nurse-badge" id="detail-nurse-badge">Staff</div>
+            </div>
+
+            <!-- Month Selector Pagination Container for Individual Modal -->
+            <div class="month-selector-container"></div>
+
+            <!-- Stats breakdown for individual -->
+            <div class="individual-stats">
+                <div class="ind-stat-item">
+                    <span class="lbl">เวรเช้า (ช):</span>
+                    <strong id="ind-m-count" class="m-txt">0</strong>
+                </div>
+                <div class="ind-stat-item">
+                    <span class="lbl">เวรบ่าย (บ):</span>
+                    <strong id="ind-a-count" class="a-txt">0</strong>
+                </div>
+                <div class="ind-stat-item">
+                    <span class="lbl">เวรดึก (ด):</span>
+                    <strong id="ind-n-count" class="n-txt">0</strong>
+                </div>
+                <div class="ind-stat-item">
+                    <span class="lbl">วันหยุด (Off):</span>
+                    <strong id="ind-off-count" class="off-txt">0</strong>
+                </div>
+            </div>
+
+            <div class="individual-calendar-wrapper scrollbar-custom">
+                <div class="individual-calendar" id="individual-calendar-grid">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SWAP REQUEST DETAILS MODAL (ADMIN APPROVAL) -->
+    <div class="modal-overlay" id="request-detail-modal">
+        <div class="modal-card glass-panel anim-scale-up">
+            <button class="modal-close-btn" onclick="app.closeModal('request-detail-modal')">&times;</button>
+            <div class="modal-header">
+                <i class="fa-solid fa-arrows-spin modal-icon swap-icon-color"></i>
+                <h2>พิจารณาคำขออนุมัติแลกเปลี่ยนเวร</h2>
+                <p>ตรวจสอบรายละเอียดตารางเวรและการทดแทนปฏิบัติหน้าที่ก่อนทำการอนุมัติ</p>
+            </div>
+
+            <div id="swap-detail-content" class="swap-detail-body">
+                <!-- Populated dynamically -->
+            </div>
+
+            <div class="modal-footer split-footer" id="swap-detail-actions">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD NEW STAFF MODAL -->
+    <div class="modal-overlay" id="add-staff-modal">
+        <div class="modal-card glass-panel anim-scale-up">
+            <button class="modal-close-btn" onclick="app.closeModal('add-staff-modal')">&times;</button>
+            <div class="modal-header">
+                <i class="fa-solid fa-user-plus modal-icon admin-color"></i>
+                <h2>เพิ่มและสุ่มตารางเวรเจ้าหน้าที่ใหม่</h2>
+                <p>กรอกข้อมูลของเจ้าหน้าที่ใหม่เพื่อเพิ่มเข้าระบบและสุ่มตารางเวร 30 วันโดยอัตโนมัติ</p>
+            </div>
+            <form onsubmit="app.addNewStaff(event)" class="modal-form">
+                <div class="form-group">
+                    <label for="new-staff-name">ชื่อ-นามสกุล (เช่น พว. สมรัก ดีเด่น)</label>
+                    <input type="text" id="new-staff-name" placeholder="ชื่อ-นามสกุล" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="new-staff-dept">แผนกปฏิบัติงานหลัก</label>
+                    <select id="new-staff-dept" required>
+                        <option value="" disabled selected>-- เลือกแผนก --</option>
+                        <option value="ห้องER">ห้อง ER</option>
+                        <option value="ห้องคลอด">ห้องคลอด</option>
+                        <option value="ห้องฉุกเฉิน">ห้องฉุกเฉิน</option>
+                    </select>
+                </div>
+                <button type="submit" class="modal-submit-btn admin-btn">
+                    <i class="fa-solid fa-dice"></i> เพิ่มและสุ่มตารางเวร
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- GOOGLE SHEET SYNC MODAL -->
+    <div class="modal-overlay" id="gsheet-modal">
+        <div class="modal-card glass-panel xl-modal anim-scale-up">
+            <button class="modal-close-btn" onclick="app.closeModal('gsheet-modal')">&times;</button>
+            <div class="modal-header">
+                <i class="fa-solid fa-file-excel modal-icon gsheet-icon-color"></i>
+                <h2>เชื่อมต่อ Google Sheets Database</h2>
+                <p>จัดการการเชื่อมต่อฐานข้อมูล Google Sheet เพื่ออ่านและแก้ไขข้อมูลแบบเรียลไทม์</p>
+            </div>
+            
+            <div class="gsheet-modal-body">
+                <div class="sheet-link-info">
+                    <label><i class="fa-solid fa-file-csv"></i> ฐานข้อมูล Google Sheet ที่ใช้งานปัจจุบัน:</label>
+                    <div class="sheet-url-box">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <a href="https://docs.google.com/spreadsheets/d/1rn-iaDgK0Yl_P2JPPND3wZkZQaRAGMrxIhSoZBXhsMY/edit?usp=sharing" target="_blank" id="active-sheet-link">
+                            https://docs.google.com/spreadsheets/d/1rn-iaDgK0Yl_P2JPPND3wZkZQaRAGMrxIhSoZBXhsMY
+                        </a>
+                    </div>
+                </div>
+
+                <div class="form-group margin-top-15">
+                    <label for="gsheet-script-url">Google Apps Script Web App URL:</label>
+                    <input type="text" id="gsheet-script-url" placeholder="https://script.google.com/macros/s/.../exec">
+                    <small class="help-text">กรอก URL ที่ได้จากการกด Deploy Web App ใน Google Sheet</small>
+                </div>
+
+                <div class="gsheet-actions-grid">
+                    <button type="button" class="btn-gsheet-action primary" onclick="app.saveGoogleSheetUrl()">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึก URL & ดึงข้อมูลทันที
+                    </button>
+                    <button type="button" class="btn-gsheet-action secondary" onclick="app.syncGoogleSheetData()">
+                        <i class="fa-solid fa-rotate"></i> ดึงข้อมูลจาก Sheet (Refresh)
+                    </button>
+                    <button type="button" class="btn-gsheet-action success" onclick="app.pushLocalToGoogleSheet()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> ส่งข้อมูลปัจจุบันขึ้น Google Sheet
+                    </button>
+                    <button type="button" class="btn-gsheet-action warning" onclick="app.randomizeAllSchedules(true)">
+                        <i class="fa-solid fa-dice"></i> สุ่มเวรพนักงานทั้งหมดใหม่
+                    </button>
+                </div>
+
+                <div class="script-instructions-box margin-top-15">
+                    <div class="instructions-header">
+                        <i class="fa-solid fa-code"></i> <span>ขั้นตอนติดตั้ง Google Apps Script (ทำเพียงครั้งแรก)</span>
+                    </div>
+                    <ol class="instructions-list">
+                        <li>เปิดไฟล์ <a href="https://docs.google.com/spreadsheets/d/1rn-iaDgK0Yl_P2JPPND3wZkZQaRAGMrxIhSoZBXhsMY/edit?usp=sharing" target="_blank" style="color: #64ffda;">Google Sheet</a> -> คลิกเมนู <strong>ส่วนขยาย (Extensions)</strong> -> เลือก <strong>Apps Script</strong></li>
+                        <li>เปิดไฟล์ <code>google_apps_script.js</code> ในโฟลเดอร์โปรเจกต์นี้ คัดลอกโค้ดทั้งหมดไปวางใน <code>Code.gs</code> บน Apps Script</li>
+                        <li>กดปุ่ม <strong>บันทึก (Save / รูปแผ่นดิสก์)</strong></li>
+                        <li>กดปุ่ม <strong>ทำให้ใช้งานได้ (Deploy)</strong> มุมขวาบน -> เลือก <strong>การทำให้ใช้งานได้ใหม่ (New deployment)</strong></li>
+                        <li>คลิกไอคอนเฟืองเลือกประเภทเป็น <strong>เว็บแอป (Web app)</strong></li>
+                        <li>ตั้งค่า <strong>ผู้มีสิทธิ์เข้าถึง (Who has access)</strong> ให้เป็น <code>ทุกคน (Anyone)</code> -> กดปุ่ม <strong>Deploy</strong></li>
+                        <li>ให้สิทธิ์อนุมัติ (Authorize access) แล้วคัดลอก **Web App URL** มาวางในช่องด้านบนแล้วกดบันทึก</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT SHIFT MODAL (1-2 SHIFTS & DIAGONAL SPLIT) -->
+    <div class="modal-overlay" id="edit-shift-modal">
+        <div class="modal-card glass-panel shift-edit-modal-card anim-scale-up">
+            <button class="modal-close-btn" onclick="app.closeModal('edit-shift-modal')">&times;</button>
+            <div class="modal-header">
+                <i class="fa-solid fa-calendar-plus modal-icon admin-color"></i>
+                <h2 id="edit-shift-title">แก้ไขกะเวรปฏิบัติงาน</h2>
+                <p id="edit-shift-subtitle">ปรับแต่งกะเวร 1 หรือ 2 กะ (แบ่งเส้นทแยงมุม) พร้อมตรวจสอบกฎเวลาพักผ่อน</p>
+            </div>
+
+            <!-- Mode Selector Tabs -->
+            <div class="shift-mode-tabs">
+                <button type="button" class="shift-mode-tab active" id="tab-mode-single" onclick="app.setShiftEditMode('single')">
+                    <i class="fa-solid fa-square"></i> 1 กะ (กะเดี่ยว)
+                </button>
+                <button type="button" class="shift-mode-tab" id="tab-mode-dual" onclick="app.setShiftEditMode('dual')">
+                    <i class="fa-solid fa-table-cells-large"></i> 2 กะ (แบ่งทแยงมุม)
+                </button>
+                <button type="button" class="shift-mode-tab" id="tab-mode-off" onclick="app.setShiftEditMode('off')">
+                    <i class="fa-solid fa-mug-hot"></i> วันหยุด (Off)
+                </button>
+            </div>
+
+            <!-- Live Preview and Rule Checker Section -->
+            <div class="preview-and-rule-section">
+                <div class="live-preview-wrapper">
+                    <div class="edit-live-preview-cell" id="edit-live-preview-box">
+                        <!-- Rendered dynamically -->
+                    </div>
+                    <span>ตัวอย่างแสดงผล</span>
+                </div>
+                <div class="rule-checker-container">
+                    <div class="rule-title">
+                        <i class="fa-solid fa-shield-halved"></i> <span>ตรวจสอบกฎการต่อเวร (Rest Constraint):</span>
+                    </div>
+                    <div class="rule-badge-status valid" id="edit-rule-badge">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span id="edit-rule-text">เวรนี้ถูกต้องตามเกณฑ์เวลาพักผ่อน</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shift Configuration Forms -->
+            <form id="edit-shift-form" onsubmit="app.saveShiftEdit(event)" class="shift-editor-content margin-top-15">
+                <input type="hidden" id="edit-shift-nurse-id">
+                <input type="hidden" id="edit-shift-month">
+                <input type="hidden" id="edit-shift-day">
+                <input type="hidden" id="edit-shift-mode" value="single">
+
+                <div class="shifts-config-grid" id="shifts-config-grid">
+                    <!-- Shift 1 (Top-Left Triangle or Full Cell) -->
+                    <div class="shift-config-card" id="shift1-config-card">
+                        <div class="shift-config-header">
+                            <span id="shift1-card-title"><i class="fa-solid fa-1"></i> กะที่ 1 (ฝั่งบนซ้าย)</span>
+                            <span class="triangle-hint" id="shift1-hint">มุมซ้ายบน ◤</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-shift1-type">ประเภทกะเวร:</label>
+                            <select id="edit-shift1-type" onchange="app.handleShiftEditChange()" required>
+                                <option value="ช">เวรเช้า (ช) - [08:00 - 16:00]</option>
+                                <option value="บ">เวรบ่าย (บ) - [16:00 - 24:00]</option>
+                                <option value="ด">เวรดึก (ด) - [00:00 - 08:00]</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-shift1-room">แผนก / ห้อง:</label>
+                            <select id="edit-shift1-room" onchange="app.handleShiftEditChange()" required>
+                                <option value="ห้องER">ห้อง ER (น้ำเงิน)</option>
+                                <option value="ห้องคลอด">ห้องคลอด (ชมพู)</option>
+                                <option value="ห้องฉุกเฉิน">ห้องฉุกเฉิน (เหลือง)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Shift 2 (Bottom-Right Triangle) -->
+                    <div class="shift-config-card" id="shift2-config-card">
+                        <div class="shift-config-header">
+                            <span><i class="fa-solid fa-2"></i> กะที่ 2 (ฝั่งล่างขวา)</span>
+                            <span class="triangle-hint">มุมขวาล่าง ◢</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-shift2-type">ประเภทกะเวร:</label>
+                            <select id="edit-shift2-type" onchange="app.handleShiftEditChange()">
+                                <option value="บ">เวรบ่าย (บ) - [16:00 - 24:00]</option>
+                                <option value="ด">เวรดึก (ด) - [00:00 - 08:00]</option>
+                                <option value="ช">เวรเช้า (ช) - [08:00 - 16:00]</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-shift2-room">แผนก / ห้อง:</label>
+                            <select id="edit-shift2-room" onchange="app.handleShiftEditChange()">
+                                <option value="ห้องER">ห้อง ER (น้ำเงิน)</option>
+                                <option value="ห้องคลอด" selected>ห้องคลอด (ชมพู)</option>
+                                <option value="ห้องฉุกเฉิน">ห้องฉุกเฉิน (เหลือง)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer split-footer margin-top-15">
+                    <button type="button" class="btn-gsheet-action secondary" onclick="app.closeModal('edit-shift-modal')">
+                        <i class="fa-solid fa-xmark"></i> ยกเลิก
+                    </button>
+                    <button type="submit" class="modal-submit-btn admin-btn" id="edit-shift-submit-btn">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกการเปลี่ยนแปลง
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Core Javascript Code -->
+    <script src="app.js"></script>
+</body>
+
+</html>

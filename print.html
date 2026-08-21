@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>พิมพ์ตารางเวรรวม - โรงพยาบาลสังขละบุรี</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1b4332;
+            --primary-light: #2d6a4f;
+            --border-color: #cbd5e1;
+            --bg-page: #f8fafc;
+            --room-er-bg: #e0f2fe;
+            --room-er-color: #2b6cb0;
+            --room-delivery-bg: #ffe3ec;
+            --room-delivery-color: #d53f8c;
+            --room-accident-bg: #fff5c5;
+            --room-accident-color: #b7791f;
+            --shift-off-bg: #ffffff;
+            --shift-off-color: #718096;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg-page);
+            color: #1e293b;
+            margin: 0;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .print-container {
+            width: 100%;
+            max-width: 1350px;
+        }
+
+        /* Top Action Bar */
+        .print-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 16px;
+            background: #ffffff;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .print-title h1 {
+            font-size: 20px;
+            margin: 0;
+            color: var(--primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .print-title p {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-select {
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #f8fafc;
+            color: #334155;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .ctrl-select:focus {
+            border-color: var(--primary-light);
+        }
+
+        .btn-action {
+            background-color: var(--primary-light);
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background-color: var(--primary);
+        }
+
+        .btn-action.secondary {
+            background-color: #64748b;
+        }
+
+        .btn-action.secondary:hover {
+            background-color: #475569;
+        }
+
+        .btn-action.back-btn {
+            background-color: #ffffff;
+            color: #334155;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-action.back-btn:hover {
+            background-color: #f1f5f9;
+        }
+
+        /* Table Card Container */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 1160px;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 11px;
+            text-align: center;
+            background: #ffffff;
+        }
+
+        th, td {
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0;
+            width: 33px;
+            min-width: 33px;
+            max-width: 33px;
+            height: 32px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: #475569;
+            padding: 3px 1px;
+            line-height: 1.15;
+            height: 36px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        th .th-month {
+            font-size: 9px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        th .th-day {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* Sticky Nurse Name Column */
+        th:first-child, td:first-child {
+            text-align: left;
+            padding-left: 10px;
+            padding-right: 8px;
+            font-weight: 600;
+            background-color: #f8fafc;
+            width: 135px;
+            min-width: 135px;
+            max-width: 135px;
+            border-left: 1px solid #e2e8f0;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+
+        th:first-child {
+            z-index: 20;
+            background-color: #f1f5f9;
+        }
+
+        .nurse-meta-name {
+            font-weight: 700;
+            font-size: 11px;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nurse-meta-dept {
+            font-size: 9px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Shift types styles - td must NOT have display:flex */
+        .cell-shift {
+            position: relative;
+            padding: 0 !important;
+            box-sizing: border-box;
+        }
+
+        .single-cell-container {
+            width: 100%;
+            height: 100%;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11.5px;
+            font-weight: 700;
+            box-sizing: border-box;
+        }
+
+        /* Diagonal Split Cell (Top-Right to Bottom-Left split) */
+        .split-cell-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 32px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .split-triangle.top-left {
+            position: absolute;
+            inset: 0;
+            clip-path: polygon(0 0, 100% 0, 0 100%);
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 2px 0 0 3px;
+            box-sizing: border-box;
+            z-index: 1;
+        }
+
+        .split-triangle.bottom-right {
+            position: absolute;
+            inset: 0;
+            clip-path: polygon(100% 0, 100% 100%, 0 100%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 0 3px 2px 0;
+            box-sizing: border-box;
+            z-index: 1;
+        }
+
+        .split-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        /* Room Theme Colors */
+        .room-er, .split-triangle.room-er, .single-cell-container.room-er { background-color: var(--room-er-bg) !important; color: var(--room-er-color) !important; }
+        .room-delivery, .split-triangle.room-delivery, .single-cell-container.room-delivery { background-color: var(--room-delivery-bg) !important; color: var(--room-delivery-color) !important; }
+        .room-accident, .split-triangle.room-accident, .single-cell-container.room-accident { background-color: var(--room-accident-bg) !important; color: var(--room-accident-color) !important; }
+        .off, .split-triangle.off, .single-cell-container.off { background-color: var(--shift-off-bg) !important; color: var(--shift-off-color) !important; }
+        .m, .split-triangle.m, .single-cell-container.m { background-color: var(--room-accident-bg) !important; color: var(--room-accident-color) !important; }
+        .a, .split-triangle.a, .single-cell-container.a { background-color: var(--room-delivery-bg) !important; color: var(--room-delivery-color) !important; }
+        .n, .split-triangle.n, .single-cell-container.n { background-color: var(--room-er-bg) !important; color: var(--room-er-color) !important; }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+
+        .pagination-btn {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--primary-light);
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background-color: #f1f5f9;
+            border-color: var(--primary-light);
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #1e293b;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            background-color: #ffffff;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Print Page Break & Sizing */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 5mm 6mm;
+            }
+
+            body {
+                background: #ffffff;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+            }
+
+            .print-container {
+                max-width: 100%;
+                width: 100%;
+            }
+
+            .print-header {
+                border: none;
+                box-shadow: none;
+                padding: 0 0 8px 0;
+                margin-bottom: 8px;
+            }
+
+            .controls-row, .pagination-container {
+                display: none !important;
+            }
+
+            .table-container {
+                overflow: visible !important;
+                border: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            table {
+                min-width: 100% !important;
+                width: 100% !important;
+                font-size: 9.5px;
+                border-collapse: collapse !important;
+            }
+
+            th, td {
+                height: 26px !important;
+                min-height: 26px !important;
+                border: 1px solid #94a3b8 !important;
+                font-size: 9.5px !important;
+                width: auto !important;
+                min-width: 0 !important;
+                max-width: none !important;
+            }
+
+            th:first-child, td:first-child {
+                width: 110px !important;
+                min-width: 110px !important;
+                max-width: 110px !important;
+                position: static !important;
+                border: 1px solid #94a3b8 !important;
+                padding-left: 6px !important;
+            }
+
+            .single-cell-container {
+                min-height: 26px !important;
+                font-size: 9.5px !important;
+            }
+
+            .split-cell-container {
+                min-height: 26px !important;
+            }
+
+            .split-label {
+                font-size: 8.5px !important;
+            }
+        }
+    </style>
+    <link rel="icon" type="image/webp" href="assets/hspmbz60021e231028112004.webp">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="print-container">
+        <div class="print-header">
+            <div class="print-title" style="display: flex; align-items: center; gap: 14px;">
+                <img src="assets/hspmbz60021e231028112004.webp" alt="Logo" style="width: 46px; height: 46px; object-fit: contain; border-radius: 50%;">
+                <div>
+                    <h1 style="margin:0;"><i class="fa-solid fa-hospital-user"></i> ตารางปฏิบัติงานเวรรวมเจ้าหน้าที่พยาบาล</h1>
+                    <p id="print-subtitle" style="margin: 4px 0 0 0;">ประจำเดือนพฤศจิกายน พ.ศ. 2569 (โรงพยาบาลสังขละบุรี)</p>
+                </div>
+            </div>
+            <div class="controls-row">
+                <a href="index.html" class="btn-action back-btn"><i class="fa-solid fa-arrow-left"></i> กลับสู่ระบบ</a>
+                <select id="month-filter-select" class="ctrl-select" onchange="onMonthChange(this.value)">
+                    <!-- Populated dynamically -->
+                </select>
+                <select id="room-filter-select" class="ctrl-select" onchange="onRoomChange(this.value)">
+                    <option value="ห้องทั้งหมด">ห้องทั้งหมด</option>
+                    <option value="ห้องER">ห้อง ER</option>
+                    <option value="ห้องคลอด">ห้องคลอด</option>
+                    <option value="ห้องฉุกเฉิน">ห้องฉุกเฉิน</option>
+                </select>
+                <button onclick="window.print()" class="btn-action"><i class="fa-solid fa-print"></i> พิมพ์เอกสาร</button>
+                <button onclick="downloadAsImage()" class="btn-action secondary"><i class="fa-solid fa-file-image"></i> ดาวน์โหลดภาพ (JPG)</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="print-table">
+                <thead>
+                    <!-- Populated dynamically -->
+                </thead>
+                <tbody>
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Control -->
+        <div class="pagination-container" id="print-pagination"></div>
+    </div>
+
+    <script>
+        const months = [
+            { id: 1, name: 'มกราคม', shortName: 'ม.ค.', days: 31 },
+            { id: 2, name: 'กุมภาพันธ์', shortName: 'ก.พ.', days: 28 },
+            { id: 3, name: 'มีนาคม', shortName: 'มี.ค.', days: 31 },
+            { id: 4, name: 'เมษายน', shortName: 'เม.ย.', days: 30 },
+            { id: 5, name: 'พฤษภาคม', shortName: 'พ.ค.', days: 31 },
+            { id: 6, name: 'มิถุนายน', shortName: 'มิ.ย.', days: 30 },
+            { id: 7, name: 'กรกฎาคม', shortName: 'ก.ค.', days: 31 },
+            { id: 8, name: 'สิงหาคม', shortName: 'ส.ค.', days: 31 },
+            { id: 9, name: 'กันยายน', shortName: 'ก.ย.', days: 30 },
+            { id: 10, name: 'ตุลาคม', shortName: 'ต.ค.', days: 31 },
+            { id: 11, name: 'พฤศจิกายน', shortName: 'พ.ย.', days: 30 },
+            { id: 12, name: 'ธันวาคม', shortName: 'ธ.ค.', days: 31 }
+        ];
+
+        let selectedMonth = 11;
+        let selectedRoom = 'ห้องทั้งหมด';
+        let currentPage = 1;
+        const pageSize = 12;
+        let staff = [];
+        let schedule = {};
+        let filteredStaff = [];
+
+        function normalizeShift(shift, defaultRoom = 'ห้องER') {
+            if (!shift) return { shiftType: 'Off', room: 'Off', shift2Type: '', room2: '' };
+            if (typeof shift === 'string') {
+                const str = shift.trim();
+                if (str.includes('/') || str.includes('+') || str.includes(',')) {
+                    const parts = str.split(/[\/\+,]/).map(p => p.trim());
+                    return { shiftType: parts[0] || 'Off', room: defaultRoom, shift2Type: parts[1] || '', room2: defaultRoom };
+                }
+                return { shiftType: str, room: str === 'Off' ? 'Off' : defaultRoom, shift2Type: '', room2: '' };
+            }
+            if (typeof shift === 'object' && shift !== null) {
+                let s1 = shift.shiftType || shift.shiftCode || 'Off';
+                let r1 = shift.room || (s1 === 'Off' ? 'Off' : defaultRoom);
+                let s2 = shift.shift2Type || shift.shift2Code || '';
+                let r2 = shift.room2 || (s2 && s2 !== 'Off' ? defaultRoom : '');
+                return { shiftType: s1, room: r1, shift2Type: s2, room2: r2 };
+            }
+            return { shiftType: 'Off', room: 'Off', shift2Type: '', room2: '' };
+        }
+
+        function getShiftStyle(shiftCode, roomName) {
+            if (shiftCode === 'Off' || roomName === 'Off') {
+                return { className: 'off' };
+            }
+            if (roomName === 'ห้องER') {
+                return { className: 'room-er' };
+            }
+            if (roomName === 'ห้องคลอด') {
+                return { className: 'room-delivery' };
+            }
+            if (roomName === 'ห้องฉุกเฉิน') {
+                return { className: 'room-accident' };
+            }
+            if (shiftCode === 'ช') return { className: 'room-accident' };
+            if (shiftCode === 'บ') return { className: 'room-delivery' };
+            if (shiftCode === 'ด') return { className: 'room-er' };
+            return { className: 'off' };
+        }
+
+        function renderPrintCellHTML(shiftObj, nurseDept) {
+            const shift = normalizeShift(shiftObj, nurseDept);
+            const isDual = shift.shift2Type && shift.shift2Type !== 'Off' && shift.shiftType !== 'Off';
+
+            if (isDual) {
+                const s1 = getShiftStyle(shift.shiftType, shift.room);
+                const s2 = getShiftStyle(shift.shift2Type, shift.room2 || shift.room);
+                return `
+                    <div class="split-cell-container">
+                        <div class="split-triangle top-left ${s1.className}">
+                            <span class="split-label">${shift.shiftType}</span>
+                        </div>
+                        <div class="split-triangle bottom-right ${s2.className}">
+                            <span class="split-label">${shift.shift2Type}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const s1 = getShiftStyle(shift.shiftType, shift.room);
+                return `
+                    <div class="single-cell-container ${s1.className}">
+                        <span>${shift.shiftType}</span>
+                    </div>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check URL search params for month or room
+            const urlParams = new URLSearchParams(window.location.search);
+            const paramMonth = parseInt(urlParams.get('month'));
+            if (paramMonth >= 1 && paramMonth <= 12) {
+                selectedMonth = paramMonth;
+            }
+            const paramRoom = urlParams.get('room');
+            if (paramRoom) {
+                selectedRoom = paramRoom;
+                const roomSelect = document.getElementById('room-filter-select');
+                if (roomSelect) roomSelect.value = paramRoom;
+            }
+
+            initMonthSelector();
+            loadData();
+            applyFilterAndRender();
+        });
+
+        function initMonthSelector() {
+            const select = document.getElementById('month-filter-select');
+            if (!select) return;
+            select.innerHTML = '';
+            months.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = `เดือน${m.name} 2569`;
+                if (m.id === selectedMonth) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function onMonthChange(monthId) {
+            selectedMonth = parseInt(monthId) || 11;
+            currentPage = 1;
+            applyFilterAndRender();
+        }
+
+        function onRoomChange(roomVal) {
+            selectedRoom = roomVal;
+            currentPage = 1;
+            applyFilterAndRender();
+        }
+
+        function loadData() {
+            const staffData = localStorage.getItem('sukho_staff');
+            const scheduleData = localStorage.getItem('sukho_schedule');
+
+            if (staffData && scheduleData) {
+                try {
+                    staff = JSON.parse(staffData);
+                    schedule = JSON.parse(scheduleData);
+                } catch (e) {
+                    console.error('Error parsing localStorage', e);
+                }
+            }
+
+            if (!staff || staff.length === 0) {
+                const thaiFirstNames = ["สมจิต", "นงลักษณ์", "วันเพ็ญ", "สุภัทรา", "มยุรี", "กนกวรรณ", "พิมลพรรณ", "อุมาพร", "วิไลวรรณ", "อรอนงค์", "จันทิมา", "ปรียานุช", "ศิริพรรณ", "สุจิตรา", "ดาริกา"];
+                const thaiLastNames = ["รักสงบ", "เกียรติดำรง", "ศิริวัฒน์", "สุขสวัสดิ์", "บุญมี", "เจริญรุ่งเรือง", "ใจดี", "แก้วมณี", "ศรีสุข", "พงษ์ไทย"];
+                const depts = ['ห้องER', 'ห้องคลอด', 'ห้องฉุกเฉิน'];
+                staff = [
+                    { id: 'staff-james', name: 'พี่เจม', role: 'staff' },
+                    { id: 'staff-to', name: 'โต้', role: 'staff' },
+                    { id: 'staff-chompoo', name: 'ชมพู่', role: 'staff' }
+                ];
+                for (let i = 1; i <= 20; i++) {
+                    const fName = thaiFirstNames[(i - 1) % thaiFirstNames.length];
+                    const lName = thaiLastNames[(i - 1) % thaiLastNames.length];
+                    staff.push({ id: `staff-mock-${i}`, name: `พว. ${fName} ${lName}`, role: 'staff' });
+                }
+            }
+
+            if (!schedule || Object.keys(schedule).length === 0) {
+                schedule = {};
+                const shiftTypes = ['ช', 'บ', 'ด', 'Off'];
+                const rooms = ['ห้องER', 'ห้องคลอด', 'ห้องฉุกเฉิน'];
+                staff.forEach(s => {
+                    schedule[s.id] = {};
+                    months.forEach(m => {
+                        const mShifts = [];
+                        for (let d = 1; d <= m.days; d++) {
+                            const st = shiftTypes[Math.floor(Math.random() * shiftTypes.length)];
+                            const rm = st === 'Off' ? 'Off' : rooms[Math.floor(Math.random() * rooms.length)];
+                            mShifts.push({ day: d, month: m.id, shiftType: st, room: rm });
+                        }
+                        schedule[s.id][m.id] = mShifts;
+                    });
+                });
+            }
+        }
+
+        function applyFilterAndRender() {
+            const mObj = months.find(m => m.id === selectedMonth) || months[10];
+            const subTitle = document.getElementById('print-subtitle');
+            if (subTitle) {
+                const roomLabel = selectedRoom === 'ห้องทั้งหมด' ? 'ทุกแผนก' : selectedRoom;
+                subTitle.textContent = `ประจำเดือน${mObj.name} พ.ศ. 2569 - แผนก: ${roomLabel} (โรงพยาบาลสังขละบุรี)`;
+            }
+
+            filteredStaff = staff.filter(s => {
+                if (s.role !== 'staff') return false;
+                if (selectedRoom && selectedRoom !== 'ห้องทั้งหมด') {
+                    const nurseSched = schedule[s.id];
+                    let shifts = [];
+                    if (Array.isArray(nurseSched)) {
+                        shifts = nurseSched;
+                    } else if (nurseSched && typeof nurseSched === 'object') {
+                        shifts = nurseSched[selectedMonth] || nurseSched[String(selectedMonth)] || [];
+                    }
+                    const hasShiftInRoom = shifts.some(sh => {
+                        if (!sh) return false;
+                        return sh.room === selectedRoom || sh.room2 === selectedRoom;
+                    });
+                    if (!hasShiftInRoom && s.primaryDept !== selectedRoom && s.room !== selectedRoom) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            if (filteredStaff.length === 0 && staff.length > 0 && (!selectedRoom || selectedRoom === 'ห้องทั้งหมด')) {
+                filteredStaff = staff.filter(s => s.role === 'staff');
+            }
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const table = document.getElementById('print-table');
+            if (!table) return;
+
+            const thead = table.querySelector('thead');
+            const tbody = table.querySelector('tbody');
+
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            const mObj = months.find(m => m.id === selectedMonth) || months[10];
+            const daysInMonth = mObj.days;
+
+            // 1. Header row
+            const headerRow = document.createElement('tr');
+            const nameHeader = document.createElement('th');
+            nameHeader.innerHTML = `<div>รายชื่อพยาบาล</div><div class="th-month">(${mObj.shortName})</div>`;
+            headerRow.appendChild(nameHeader);
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayHeader = document.createElement('th');
+                dayHeader.innerHTML = `<div class="th-month">${mObj.shortName}</div><div class="th-day">${day}</div>`;
+                headerRow.appendChild(dayHeader);
+            }
+            thead.appendChild(headerRow);
+
+            // 2. Pagination indices
+            const totalItems = filteredStaff.length;
+            if (totalItems === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = daysInMonth + 1;
+                td.style.padding = '30px';
+                td.textContent = 'ไม่พบข้อมูลตารางเวรตามเงื่อนไขที่เลือก';
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+                renderPaginationControls(0);
+                return;
+            }
+
+            const totalPages = Math.ceil(totalItems / pageSize) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalItems);
+            const pagedStaff = filteredStaff.slice(startIndex, endIndex);
+
+            // 3. Render rows
+            pagedStaff.forEach(nurse => {
+                const tr = document.createElement('tr');
+                const tdName = document.createElement('td');
+                tdName.innerHTML = `
+                    <div class="nurse-meta-name" title="${nurse.name}">${nurse.name}</div>
+                `;
+                tr.appendChild(tdName);
+
+                const nurseSched = schedule[nurse.id];
+                let shifts = [];
+                if (Array.isArray(nurseSched)) {
+                    shifts = nurseSched;
+                } else if (nurseSched && typeof nurseSched === 'object') {
+                    shifts = nurseSched[selectedMonth] || nurseSched[String(selectedMonth)] || [];
+                }
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const shift = shifts[day - 1] || { shiftType: 'Off', room: 'Off' };
+                    const tdShift = document.createElement('td');
+                    tdShift.className = 'cell-shift';
+                    tdShift.innerHTML = renderPrintCellHTML(shift);
+                    tr.appendChild(tdShift);
+                }
+
+                tbody.appendChild(tr);
+            });
+
+            renderPaginationControls(totalItems);
+        }
+
+        function renderPaginationControls(totalItems) {
+            const container = document.getElementById('print-pagination');
+            if (!container) return;
+
+            const totalPages = Math.ceil(totalItems / pageSize) || 1;
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'pagination-btn';
+            prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i> ก่อนหน้า';
+            prevBtn.disabled = currentPage <= 1;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                }
+            };
+
+            const info = document.createElement('div');
+            info.className = 'pagination-info';
+            info.textContent = `หน้า ${currentPage} จาก ${totalPages} (รวม ${totalItems} ท่าน)`;
+
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'pagination-btn';
+            nextBtn.innerHTML = 'ถัดไป <i class="fa-solid fa-chevron-right"></i>';
+            nextBtn.disabled = currentPage >= totalPages;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                }
+            };
+
+            container.appendChild(prevBtn);
+            container.appendChild(info);
+            container.appendChild(nextBtn);
+        }
+
+        function downloadAsImage() {
+            const container = document.querySelector('.table-container');
+            if (!container) return;
+
+            const currentMonthObj = months.find(m => m.id === selectedMonth) || months[10];
+            const originalOverflow = container.style.overflow;
+            container.style.overflow = 'visible';
+
+            html2canvas(container, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true
+            }).then(canvas => {
+                container.style.overflow = originalOverflow;
+                const link = document.createElement('a');
+                let roomNameClean = selectedRoom === 'ห้องทั้งหมด' ? 'ทุกแผนก' : selectedRoom;
+                link.download = `ตารางเวร-${currentMonthObj.name}-${roomNameClean}-หน้า${currentPage}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            }).catch(err => {
+                container.style.overflow = originalOverflow;
+                alert('เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ');
+                console.error(err);
+            });
+        }
+    </script>
+</body>
+</html>
