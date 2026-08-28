@@ -38,16 +38,12 @@ class NurseSchedulingApp {
             selectedMonth: 11 // Default month (11 = พฤศจิกายน)
         };
 
-        // Static Credentials Mapping
-        this.credentials = {
-            staff: {
-                "พี่เจม": "เจมซ่า",
-                "โต้": "โต้โยต้า",
-                "ชมพู่": "1111"
-            },
+        // Credentials Mapping
+        const savedCreds = localStorage.getItem('sukho_credentials');
+        this.credentials = savedCreds ? JSON.parse(savedCreds) : {
+            staff: {},
             admin: {
-                "พี่บัว": "เซล่ามูน",
-                "พี่พลอย": "ชาบู"
+                "admin": "admin1234"
             }
         };
 
@@ -511,20 +507,24 @@ class NurseSchedulingApp {
 
         if (storedStaff && storedSchedule) {
             try {
-                this.state.staff = JSON.parse(storedStaff);
-                const depts = ['ห้องER', 'ห้องคลอด', 'ห้องฉุกเฉิน'];
-                this.state.staff.forEach((s, idx) => {
-                    if (!s.primaryDept || s.primaryDept === 'undefined' || s.primaryDept === 'null') {
-                        if (s.name === 'ชมพู่') s.primaryDept = 'ห้องคลอด';
-                        else if (s.name === 'โต้') s.primaryDept = 'ห้องฉุกเฉิน';
-                        else if (s.name === 'พี่เจม') s.primaryDept = 'ห้องER';
-                        else if (s.role === 'admin') s.primaryDept = 'ฝ่ายการพยาบาล';
-                        else s.primaryDept = depts[idx % depts.length];
-                    }
-                });
-                const parsedSchedule = JSON.parse(storedSchedule);
-                this.state.schedule = parsedSchedule;
-                localStorage.setItem('sukho_staff', JSON.stringify(this.state.staff));
+                const parsedStaff = JSON.parse(storedStaff);
+                // Purge old mock data if detected
+                const hasMock = Array.isArray(parsedStaff) && parsedStaff.some(s => s.id && (
+                    s.id.startsWith('staff-mock-') || 
+                    s.id === 'staff-james' || 
+                    s.id === 'staff-to' || 
+                    s.id === 'staff-chompoo' || 
+                    s.id === 'admin-bua' || 
+                    s.id === 'admin-ploy'
+                ));
+
+                if (hasMock) {
+                    this.generateInitialData();
+                    return;
+                }
+
+                this.state.staff = parsedStaff;
+                this.state.schedule = JSON.parse(storedSchedule);
             } catch (e) {
                 this.generateInitialData();
             }
@@ -545,57 +545,14 @@ class NurseSchedulingApp {
         localStorage.setItem('sukho_swap_requests', JSON.stringify(this.state.swapRequests));
     }
 
-    getCompleteDefaultStaffList() {
-        const staffList = [
-            { id: 'staff-james', name: 'พี่เจม', role: 'staff', primaryDept: 'ห้องER' },
-            { id: 'staff-to', name: 'โต้', role: 'staff', primaryDept: 'ห้องฉุกเฉิน' },
-            { id: 'staff-chompoo', name: 'ชมพู่', role: 'staff', primaryDept: 'ห้องคลอด' },
-            { id: 'admin-bua', name: 'พี่บัว', role: 'admin', primaryDept: 'ฝ่ายการพยาบาล' },
-            { id: 'admin-ploy', name: 'พี่พลอย', role: 'admin', primaryDept: 'ฝ่ายการพยาบาล' }
-        ];
-
-        const thaiFirstNames = [
-            "สมจิต", "นงลักษณ์", "วันเพ็ญ", "สุภัทรา", "มยุรี", "กนกวรรณ", "พิมลพรรณ", "อุมาพร", 
-            "วิไลวรรณ", "อรอนงค์", "จันทิมา", "ปรียานุช", "ศิริพรรณ", "จรรยา", "วรรณิศา", "สุจิตรา", 
-            "รุ่งทิพย์", "วิลาสินี", "ทิพยวัลย์", "นุชนาถ", "ดาริกา", "ลัดดา", "ศิริพร", "ยุพา"
-        ];
-        const thaiLastNames = [
-            "รักสงบ", "เกียรติดำรง", "ศิริวัฒน์", "สุขสวัสดิ์", "เลิศวิจิตร", "พานิชยการ", "วงษ์สุวรรณ", 
-            "บุญมี", "จงเจริญ", "ทรัพย์เพิ่ม", "เจริญรุ่งเรือง", "วัฒนพงษ์", "ใจดี", "ประเสริฐยิ่ง", 
-            "แก้วมณี", "ทองอ่อน", "ศรีสุข", "รุ่งเรืองวิโรจน์", "พงษ์ไทย"
-        ];
-
-        for (let i = 1; i <= 45; i++) {
-            const fName = thaiFirstNames[(i - 1) % thaiFirstNames.length];
-            const lName = thaiLastNames[(i - 1) % thaiLastNames.length];
-            const dept = this.departments[(i - 1) % this.departments.length];
-            staffList.push({
-                id: `staff-mock-${i}`,
-                name: `พว. ${fName} ${lName}`,
-                role: 'staff',
-                primaryDept: dept
-            });
-        }
-        return staffList;
-    }
 
     generateInitialData() {
-        const staffList = this.getCompleteDefaultStaffList();
-        const scheduleMap = {};
-
-        const workingStaff = staffList.filter(s => s.role === 'staff');
-        workingStaff.forEach(staff => {
-            const yearSchedule = {};
-            this.months.forEach(m => {
-                yearSchedule[m.id] = this.generateSmartMonthShifts(m.id, m.days, staff.primaryDept);
-            });
-            scheduleMap[staff.id] = yearSchedule;
-        });
-
-        this.state.staff = staffList;
-        this.state.schedule = scheduleMap;
-        localStorage.setItem('sukho_staff', JSON.stringify(staffList));
-        localStorage.setItem('sukho_schedule', JSON.stringify(scheduleMap));
+        this.state.staff = [];
+        this.state.schedule = {};
+        this.state.swapRequests = [];
+        localStorage.setItem('sukho_staff', JSON.stringify([]));
+        localStorage.setItem('sukho_schedule', JSON.stringify({}));
+        localStorage.setItem('sukho_swap_requests', JSON.stringify([]));
     }
 
     saveStateToLocalStorage() {
@@ -651,21 +608,19 @@ class NurseSchedulingApp {
             const data = await response.json();
 
             if (data && data.status === 'success') {
-                // 1. Sync & Complete full 50 staff list
-                const fullDefault = this.getCompleteDefaultStaffList();
-                const mergedStaff = [];
+                const sheetStaff = [];
                 const seenNames = new Set();
 
                 // Add staff from Google Sheet if any
-                if (data.staff && data.staff.length > 0) {
+                if (data.staff && Array.isArray(data.staff) && data.staff.length > 0) {
                     data.staff.forEach(s => {
                         const nameKey = (s.name || '').trim();
                         if (nameKey && !seenNames.has(nameKey)) {
                             seenNames.add(nameKey);
-                            mergedStaff.push({
-                                id: s.id || `staff-${mergedStaff.length + 1}`,
+                            sheetStaff.push({
+                                id: s.id || `staff-${sheetStaff.length + 1}`,
                                 name: s.name,
-                                role: s.role || (s.name.includes('พี่บัว') || s.name.includes('พี่พลอย') ? 'admin' : 'staff'),
+                                role: s.role || 'staff',
                                 primaryDept: s.room || s.primaryDept || (s.role === 'admin' ? 'ฝ่ายการพยาบาล' : 'ห้องER'),
                                 avatar: s.avatar || ''
                             });
@@ -673,46 +628,19 @@ class NurseSchedulingApp {
                     });
                 }
 
-                // Fill remaining from default list so there are always 50 staff
-                fullDefault.forEach(defStaff => {
-                    if (!seenNames.has(defStaff.name)) {
-                        seenNames.add(defStaff.name);
-                        mergedStaff.push(defStaff);
-                    }
-                });
-
-                this.state.staff = mergedStaff;
-                localStorage.setItem('sukho_staff', JSON.stringify(mergedStaff));
+                this.state.staff = sheetStaff;
+                localStorage.setItem('sukho_staff', JSON.stringify(sheetStaff));
 
                 // 2. Sync schedule
                 const normalizedGSheetSched = data.schedule ? this.normalizeScheduleFromGSheet(data.schedule) : {};
-                const workingStaff = this.state.staff.filter(s => s.role === 'staff');
-                let needPush = false;
-
-                workingStaff.forEach(staff => {
-                    const hasValidSched = normalizedGSheetSched[staff.id] && Object.values(normalizedGSheetSched[staff.id]).some(shifts => Array.isArray(shifts) && shifts.length > 0);
-                    if (!hasValidSched) {
-                        const yearSchedule = {};
-                        this.months.forEach(m => {
-                            yearSchedule[m.id] = this.generateSmartMonthShifts(m.id, m.days, staff.primaryDept || 'ห้องER');
-                        });
-                        normalizedGSheetSched[staff.id] = yearSchedule;
-                        needPush = true;
-                    }
-                });
-
                 this.state.schedule = normalizedGSheetSched;
                 localStorage.setItem('sukho_schedule', JSON.stringify(normalizedGSheetSched));
 
                 // 3. Sync swap requests
-                if (data.swapRequests) {
+                if (data.swapRequests && Array.isArray(data.swapRequests)) {
                     const cleanRequests = data.swapRequests.filter(req => req.id && !req.id.startsWith('req-sample-'));
                     this.state.swapRequests = cleanRequests;
                     localStorage.setItem('sukho_swap_requests', JSON.stringify(cleanRequests));
-                }
-
-                if (needPush || (data.staff && data.staff.length < 50)) {
-                    this.pushLocalToGoogleSheet(true);
                 }
 
                 this.updateGSheetStatusUI(true, 'เชื่อมต่อ Google Sheet สำเร็จ');
@@ -918,20 +846,17 @@ class NurseSchedulingApp {
     updateNavigationElements() {
         const navAdmin = document.getElementById('nav-btn-admin-dash');
         const navReports = document.getElementById('nav-btn-admin-reports');
-        const navGsheet = document.getElementById('nav-btn-gsheet');
         const roomDropdown = document.getElementById('room-dropdown');
         const roomNavSection = document.querySelector('.room-nav-section');
 
         if (this.state.currentUser && this.state.currentUser.role === 'admin') {
             if (navAdmin) navAdmin.classList.remove('hidden');
             if (navReports) navReports.classList.remove('hidden');
-            if (navGsheet) navGsheet.classList.remove('hidden');
             if (roomDropdown) roomDropdown.classList.add('hidden');
             if (roomNavSection) roomNavSection.classList.add('hidden');
         } else {
             if (navAdmin) navAdmin.classList.add('hidden');
             if (navReports) navReports.classList.add('hidden');
-            if (navGsheet) navGsheet.classList.add('hidden');
             if (roomDropdown) roomDropdown.classList.remove('hidden');
             if (roomNavSection) roomNavSection.classList.remove('hidden');
         }
@@ -1035,80 +960,65 @@ class NurseSchedulingApp {
         const username = document.getElementById(usernameId).value.trim();
         const password = document.getElementById(passwordId).value;
 
-        const allowedPasswords = this.credentials[role];
-
-        if (allowedPasswords && allowedPasswords[username] === password) {
-            // Find staff object
-            let userObj = this.state.staff.find(s => s.name === username && s.role === role);
-            
-            // If user object not found (e.g. mock accounts or edge cases), create a placeholder
-            if (!userObj) {
-                userObj = {
-                    id: role === 'admin' ? `admin-${Date.now()}` : `staff-${Date.now()}`,
-                    name: username,
-                    role: role,
-                    primaryDept: role === 'admin' ? 'ฝ่ายการพยาบาล' : 'ห้องER'
-                };
-            }
-
-            this.state.currentUser = userObj;
-            localStorage.setItem('sukho_current_user', JSON.stringify(userObj));
-            this.updateProfileWidget();
-
-            // Clear login inputs
-            document.getElementById(usernameId).value = '';
-            document.getElementById(passwordId).value = '';
-            this.closeModal(`${role}-login-modal`);
-
-            this.showToast(`ยินดีต้อนรับคุณ ${username} เข้าสู่ระบบ`, 'success');
-
-            if (role === 'admin') {
-                this.changeView('admin-dashboard');
-            } else {
-                this.changeView('room-selection');
-            }
-        } else {
-            this.showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง", "error");
-        }
-    }
-
-    quickLogin(role, username, password) {
-        let userObj = this.state.staff.find(s => s.name === username && s.role === role);
-        if (!userObj) {
-            userObj = {
-                id: role === 'admin' ? `admin-${Date.now()}` : `staff-${Date.now()}`,
-                name: username,
-                role: role,
-                primaryDept: role === 'admin' ? 'ฝ่ายการพยาบาล' : 'ห้องER'
-            };
-        }
-
-        this.state.currentUser = userObj;
-        localStorage.setItem('sukho_current_user', JSON.stringify(userObj));
-        this.updateProfileWidget();
-
-        // Clear login inputs if any
-        const staffUser = document.getElementById('staff-username');
-        const staffPass = document.getElementById('staff-password');
-        const adminUser = document.getElementById('admin-username');
-        const adminPass = document.getElementById('admin-password');
-        if (staffUser) staffUser.value = '';
-        if (staffPass) staffPass.value = '';
-        if (adminUser) adminUser.value = '';
-        if (adminPass) adminPass.value = '';
-
-        this.closeModal('staff-login-modal');
-        this.closeModal('admin-login-modal');
-
-        const roleThai = role === 'admin' ? 'ผู้ดูแลระบบ' : 'พนักงาน';
-        this.showToast(`⚡ เข้าสู่ระบบชั่วคราวสำเร็จ: คุณ${username} (${roleThai})`, 'success');
-
         if (role === 'admin') {
-            this.changeView('admin-dashboard');
+            const isMasterAdmin = (username.toLowerCase() === 'admin' && (password === 'admin' || password === 'admin1234'));
+            const adminStaff = this.state.staff.find(s => s.role === 'admin' && s.name.toLowerCase() === username.toLowerCase());
+            const credPass = this.credentials.admin && this.credentials.admin[username];
+
+            if (isMasterAdmin || adminStaff || (credPass && credPass === password)) {
+                let userObj = adminStaff || {
+                    id: `admin-${Date.now()}`,
+                    name: username || 'Admin',
+                    role: 'admin',
+                    primaryDept: 'ฝ่ายการพยาบาล'
+                };
+
+                this.state.currentUser = userObj;
+                localStorage.setItem('sukho_current_user', JSON.stringify(userObj));
+                this.updateProfileWidget();
+
+                document.getElementById(usernameId).value = '';
+                document.getElementById(passwordId).value = '';
+                this.closeModal('admin-login-modal');
+
+                this.showToast(`ยินดีต้อนรับผู้ดูแลระบบคุณ ${userObj.name} เข้าสู่ระบบ`, 'success');
+                this.changeView('admin-dashboard');
+                return;
+            }
         } else {
-            this.changeView('room-selection');
+            const staffObj = this.state.staff.find(s => s.role === 'staff' && s.name.trim().toLowerCase() === username.toLowerCase());
+            const credPass = this.credentials.staff && this.credentials.staff[username];
+
+            if (staffObj || credPass) {
+                if (credPass && credPass !== password) {
+                    this.showToast("รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง", "error");
+                    return;
+                }
+
+                let userObj = staffObj || {
+                    id: `staff-${Date.now()}`,
+                    name: username,
+                    role: 'staff',
+                    primaryDept: 'ห้องER'
+                };
+
+                this.state.currentUser = userObj;
+                localStorage.setItem('sukho_current_user', JSON.stringify(userObj));
+                this.updateProfileWidget();
+
+                document.getElementById(usernameId).value = '';
+                document.getElementById(passwordId).value = '';
+                this.closeModal('staff-login-modal');
+
+                this.showToast(`ยินดีต้อนรับคุณ ${userObj.name} เข้าสู่ระบบ`, 'success');
+                this.changeView('room-selection');
+                return;
+            }
         }
+
+        this.showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือไม่พบรายชื่อในระบบ", "error");
     }
+
 
     handleLogout() {
         this.state.currentUser = null;
@@ -1599,6 +1509,26 @@ class NurseSchedulingApp {
             option.textContent = `${partner.name} (${partner.primaryDept})`;
             partnerSelect.appendChild(option);
         });
+
+        // Dynamically populate admin approver dropdown
+        const adminSelect = document.getElementById('swap-admin');
+        if (adminSelect) {
+            adminSelect.innerHTML = '<option value="" disabled selected>-- เลือกผู้ดูแลระบบ --</option>';
+            const admins = this.state.staff.filter(s => s.role === 'admin');
+            if (admins.length > 0) {
+                admins.forEach(adm => {
+                    const opt = document.createElement('option');
+                    opt.value = adm.name;
+                    opt.textContent = adm.name;
+                    adminSelect.appendChild(opt);
+                });
+            } else {
+                const opt = document.createElement('option');
+                opt.value = 'ผู้ดูแลระบบ (Admin)';
+                opt.textContent = 'ผู้ดูแลระบบ (Admin)';
+                adminSelect.appendChild(opt);
+            }
+        }
     }
 
     handleMyShiftChange() {
@@ -1710,40 +1640,51 @@ class NurseSchedulingApp {
 
     addNewStaff(event) {
         event.preventDefault();
+        const roleSelect = document.getElementById('new-user-role');
         const nameInput = document.getElementById('new-staff-name');
-        const deptInput = document.getElementById('new-staff-dept');
-        const name = nameInput.value.trim();
-        const dept = deptInput.value;
+        const passInput = document.getElementById('new-staff-password');
 
-        if (!name || !dept) {
-            this.showToast("กรุณากรอกข้อมูลให้ครบถ้วน", "error");
+        const role = roleSelect ? roleSelect.value : 'staff';
+        const name = nameInput ? nameInput.value.trim() : '';
+        const password = passInput ? passInput.value.trim() : '';
+
+        if (!name || !password) {
+            this.showToast("กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน", "error");
             return;
         }
 
-        // Check if name already exists
-        const exists = this.state.staff.some(s => s.name === name);
+        // Check if name already exists in this role
+        const exists = this.state.staff.some(s => s.name.toLowerCase() === name.toLowerCase() && s.role === role);
         if (exists) {
-            this.showToast(`มีเจ้าหน้าที่ชื่อ "${name}" ในระบบแล้ว`, "error");
+            this.showToast(`มีบัญชี "${name}" ในระบบแล้ว`, "error");
             return;
         }
 
-        const newStaffId = `staff-new-${Date.now()}`;
-        const newStaff = {
-            id: newStaffId,
+        // Save credentials
+        if (!this.credentials[role]) this.credentials[role] = {};
+        this.credentials[role][name] = password;
+        localStorage.setItem('sukho_credentials', JSON.stringify(this.credentials));
+
+        const newUserId = role === 'admin' ? `admin-${Date.now()}` : `staff-new-${Date.now()}`;
+        const newUser = {
+            id: newUserId,
             name: name,
-            role: 'staff',
-            primaryDept: dept
+            role: role,
+            password: password,
+            primaryDept: role === 'admin' ? 'ฝ่ายการพยาบาล' : 'ห้องER'
         };
 
-        // Generate 12-month schedule for new staff with smart dual shifts
-        const yearSchedule = {};
-        this.months.forEach(m => {
-            yearSchedule[m.id] = this.generateSmartMonthShifts(m.id, m.days, dept);
-        });
+        if (role === 'staff') {
+            // Generate 12-month schedule for new staff
+            const yearSchedule = {};
+            this.months.forEach(m => {
+                yearSchedule[m.id] = this.generateSmartMonthShifts(m.id, m.days, newUser.primaryDept);
+            });
+            this.state.schedule[newUserId] = yearSchedule;
+        }
 
         // Update state
-        this.state.staff.push(newStaff);
-        this.state.schedule[newStaffId] = yearSchedule;
+        this.state.staff.push(newUser);
 
         // Save
         this.saveStateToLocalStorage();
@@ -1752,11 +1693,12 @@ class NurseSchedulingApp {
         this.renderAdminDashboard();
         
         // Reset form & close modal
-        nameInput.value = '';
-        deptInput.value = '';
+        if (nameInput) nameInput.value = '';
+        if (passInput) passInput.value = '';
         this.closeModal('add-staff-modal');
 
-        this.showToast(`เพิ่มคุณ ${name} และสุ่มตารางเวรเรียบร้อยแล้ว`, 'success');
+        const roleLabel = role === 'admin' ? 'ผู้ดูแลระบบ (Admin)' : 'พนักงาน (Staff)';
+        this.showToast(`เพิ่มบัญชี${roleLabel} "${name}" เรียบร้อยแล้ว`, 'success');
     }
 
     renderAdminStaffList() {
@@ -1794,8 +1736,43 @@ class NurseSchedulingApp {
         });
 
         if (filteredStaff.length === 0) {
-            listContainer.innerHTML = `<li class="empty-state"><i class="fa-solid fa-search"></i> ไม่พบเจ้าหน้าที่ชื่อนี้</li>`;
+            listContainer.innerHTML = `<li class="empty-state"><i class="fa-solid fa-search"></i> ยังไม่มีรายชื่อเจ้าหน้าที่ในระบบ</li>`;
         }
+    }
+
+    async clearGoogleSheetDatabase() {
+        if (!confirm("คุณต้องการล้างข้อมูลทั้งหมดใน Google Sheet (Staff, Schedule, SwapRequests) และในระบบใช่หรือไม่?")) {
+            return;
+        }
+
+        this.generateInitialData();
+
+        if (this.googleSheetScriptUrl) {
+            try {
+                this.showToast('กำลังสั่งล้างข้อมูลบน Google Sheet...', 'info');
+                const clearUrl = `${this.googleSheetScriptUrl}${this.googleSheetScriptUrl.includes('?') ? '&' : '?'}action=clear_all`;
+                
+                try {
+                    await fetch(clearUrl, { method: 'GET', mode: 'no-cors' });
+                } catch (e) {}
+
+                try {
+                    await fetch(this.googleSheetScriptUrl, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'clear_all' })
+                    });
+                } catch (e) {}
+
+                this.showToast('ล้างข้อมูลเรียบร้อยแล้ว ฐานข้อมูลว่างเปล่าพร้อมใช้งานจริง', 'success');
+            } catch (err) {
+                console.error('Clear DB Error:', err);
+                this.showToast('ล้างข้อมูลในระบบเรียบร้อยแล้ว', 'success');
+            }
+        } else {
+            this.showToast('ล้างข้อมูลในระบบเรียบร้อยแล้ว', 'success');
+        }
+
+        this.renderCurrentView();
     }
 
     renderAdminRequestsQueue() {

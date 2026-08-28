@@ -1,12 +1,22 @@
 /**
  * Google Apps Script for Sangkhlaburi Hospital Nurse Scheduling App (Ultra-Fast & High-Performance)
- * Sheet URL: https://docs.google.com/spreadsheets/d/1rn-iaDgK0Yl_P2JPPND3wZkZQaRAGMrxIhSoZBXhsMY/edit
+ * Sheet URL: https://docs.google.com/spreadsheets/d/1zr9Qtek4BK24wZg1hWh0s0Ui9WGtcP7H3GNJ8ba5kwQ/edit?usp=sharing
  */
 
 function doGet(e) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet();
     ensureTabsExist(sheet);
+
+    if (e && e.parameter && e.parameter.action === 'clear_all') {
+      clearAllDatabaseData();
+      var clearRes = JSON.stringify({ status: 'success', message: 'All data cleared successfully' });
+      if (e.parameter.callback) {
+        return ContentService.createTextOutput(e.parameter.callback + '(' + clearRes + ')')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      }
+      return ContentService.createTextOutput(clearRes).setMimeType(ContentService.MimeType.JSON);
+    }
 
     var staffData = readSheetData(sheet.getSheetByName('Staff'));
     var scheduleSheet = sheet.getSheetByName('Schedule');
@@ -52,7 +62,11 @@ function doPost(e) {
 
     var action = data.action;
 
-    if (action === 'save_all' || action === 'init') {
+    if (action === 'clear_all') {
+      clearAllDatabaseData();
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'All data cleared' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'save_all' || action === 'init') {
       if (data.staff) saveStaffData(sheet.getSheetByName('Staff'), data.staff);
       if (data.schedule) saveScheduleData(sheet.getSheetByName('Schedule'), data.schedule);
       if (data.swapRequests) saveSwapRequestsData(sheet.getSheetByName('SwapRequests'), data.swapRequests);
@@ -73,6 +87,31 @@ function doPost(e) {
   }
 }
 
+function clearAllDatabaseData() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  ensureTabsExist(sheet);
+  
+  var staffSheet = sheet.getSheetByName('Staff');
+  if (staffSheet) {
+    staffSheet.clearContents();
+    staffSheet.getRange(1, 1, 1, 5).setValues([['id', 'name', 'role', 'password', 'avatar']]);
+  }
+
+  var scheduleSheet = sheet.getSheetByName('Schedule');
+  if (scheduleSheet) {
+    scheduleSheet.clearContents();
+    scheduleSheet.getRange(1, 1, 1, 4).setValues([['staffId', 'staffName', 'scheduleJson', 'updatedAt']]);
+  }
+
+  var swapSheet = sheet.getSheetByName('SwapRequests');
+  if (swapSheet) {
+    swapSheet.clearContents();
+    swapSheet.getRange(1, 1, 1, 13).setValues([['id', 'requesterId', 'requesterName', 'partnerId', 'partnerName', 'room', 'myDay', 'myShift', 'targetDay', 'targetShift', 'status', 'createdAt', 'reviewedBy']]);
+  }
+
+  return { status: 'success', message: 'All sheets cleared' };
+}
+
 function ensureTabsExist(spreadsheet) {
   var requiredTabs = ['Staff', 'Schedule', 'SwapRequests'];
   requiredTabs.forEach(function (tabName) {
@@ -80,7 +119,7 @@ function ensureTabsExist(spreadsheet) {
     if (!sheet) {
       sheet = spreadsheet.insertSheet(tabName);
       if (tabName === 'Staff') {
-        sheet.appendRow(['id', 'name', 'role', 'avatar']);
+        sheet.appendRow(['id', 'name', 'role', 'password', 'avatar']);
       } else if (tabName === 'Schedule') {
         sheet.appendRow(['staffId', 'staffName', 'scheduleJson', 'updatedAt']);
       } else if (tabName === 'SwapRequests') {
@@ -169,18 +208,18 @@ function saveStaffData(sheet, staffList) {
   if (!sheet || !staffList || staffList.length === 0) return;
   sheet.clearContents();
   
-  var rows = [['id', 'name', 'role', 'avatar']];
+  var rows = [['id', 'name', 'role', 'password', 'avatar']];
   var seen = {};
   
   staffList.forEach(function (s) {
     var name = (s.name || '').trim();
     if (name && !seen[name]) {
       seen[name] = true;
-      rows.push([s.id || '', s.name || '', s.role || '', s.avatar || '']);
+      rows.push([s.id || '', s.name || '', s.role || '', s.password || '', s.avatar || '']);
     }
   });
 
-  sheet.getRange(1, 1, rows.length, 4).setValues(rows);
+  sheet.getRange(1, 1, rows.length, 5).setValues(rows);
 }
 
 function saveScheduleData(sheet, scheduleObj) {

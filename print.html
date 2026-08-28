@@ -618,38 +618,11 @@
                 }
             }
 
-            if (!staff || staff.length === 0) {
-                const thaiFirstNames = ["สมจิต", "นงลักษณ์", "วันเพ็ญ", "สุภัทรา", "มยุรี", "กนกวรรณ", "พิมลพรรณ", "อุมาพร", "วิไลวรรณ", "อรอนงค์", "จันทิมา", "ปรียานุช", "ศิริพรรณ", "สุจิตรา", "ดาริกา"];
-                const thaiLastNames = ["รักสงบ", "เกียรติดำรง", "ศิริวัฒน์", "สุขสวัสดิ์", "บุญมี", "เจริญรุ่งเรือง", "ใจดี", "แก้วมณี", "ศรีสุข", "พงษ์ไทย"];
-                const depts = ['ห้องER', 'ห้องคลอด', 'ห้องฉุกเฉิน'];
-                staff = [
-                    { id: 'staff-james', name: 'พี่เจม', role: 'staff' },
-                    { id: 'staff-to', name: 'โต้', role: 'staff' },
-                    { id: 'staff-chompoo', name: 'ชมพู่', role: 'staff' }
-                ];
-                for (let i = 1; i <= 20; i++) {
-                    const fName = thaiFirstNames[(i - 1) % thaiFirstNames.length];
-                    const lName = thaiLastNames[(i - 1) % thaiLastNames.length];
-                    staff.push({ id: `staff-mock-${i}`, name: `พว. ${fName} ${lName}`, role: 'staff' });
-                }
+            if (!staff || !Array.isArray(staff)) {
+                staff = [];
             }
-
-            if (!schedule || Object.keys(schedule).length === 0) {
+            if (!schedule || typeof schedule !== 'object') {
                 schedule = {};
-                const shiftTypes = ['ช', 'บ', 'ด', 'Off'];
-                const rooms = ['ห้องER', 'ห้องคลอด', 'ห้องฉุกเฉิน'];
-                staff.forEach(s => {
-                    schedule[s.id] = {};
-                    months.forEach(m => {
-                        const mShifts = [];
-                        for (let d = 1; d <= m.days; d++) {
-                            const st = shiftTypes[Math.floor(Math.random() * shiftTypes.length)];
-                            const rm = st === 'Off' ? 'Off' : rooms[Math.floor(Math.random() * rooms.length)];
-                            mShifts.push({ day: d, month: m.id, shiftType: st, room: rm });
-                        }
-                        schedule[s.id][m.id] = mShifts;
-                    });
-                });
             }
         }
 

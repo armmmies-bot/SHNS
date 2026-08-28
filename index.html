@@ -41,9 +41,6 @@
                     class="fa-solid fa-chart-line"></i> แดชบอร์ดผู้ดูแลระบบ</button>
             <button id="nav-btn-admin-reports" class="nav-btn hidden" onclick="app.changeView('admin-reports')"><i
                     class="fa-solid fa-file-invoice"></i> หน้ารายงาน</button>
-            <button id="nav-btn-gsheet" class="nav-btn gsheet-nav-btn hidden" onclick="app.openModal('gsheet-modal')">
-                <i class="fa-solid fa-file-excel"></i> Google Sheet <span id="gsheet-status-badge" class="badge-status offline">Local</span>
-            </button>
             <div class="dropdown room-dropdown" id="room-dropdown">
                 <button class="nav-btn dropdown-toggle" id="room-dropdown-btn">
                     <i class="fa-solid fa-door-open"></i> เลือกแผนก <i class="fa-solid fa-chevron-down"></i>
@@ -95,52 +92,6 @@
                         </button>
                     </div>
 
-                    <!-- GOOGLE SHEET DATABASE SYNC BAR -->
-                    <div class="gsheet-login-banner glass-panel-sm" onclick="app.openModal('gsheet-modal')">
-                        <div class="gsheet-banner-info">
-                            <i class="fa-solid fa-table gsheet-icon"></i>
-                            <div>
-                                <span class="banner-title">Google Sheets Database</span>
-                                <span class="banner-sub" id="login-gsheet-status-text">สถานะ: โหมดข้อมูลท้องถิ่น (Local Mode) - กดเพื่อตั้งค่า</span>
-                            </div>
-                        </div>
-                        <button class="btn-config-gsheet"><i class="fa-solid fa-gear"></i> ตั้งค่า</button>
-                    </div>
-
-                    <!-- TEMPORARY QUICK LOGIN SHORTCUTS -->
-                    <div class="quick-login-section">
-                        <div class="quick-login-header">
-                            <i class="fa-solid fa-bolt"></i> <span>ปุ่มลัดเข้าสู่ระบบชั่วคราว (Quick Login)</span>
-                        </div>
-                        
-                        <div class="quick-login-group">
-                            <div class="quick-group-title"><i class="fa-solid fa-user-nurse"></i> พนักงาน (Staff):</div>
-                            <div class="quick-buttons-row">
-                                <button type="button" class="quick-btn btn-staff-quick" onclick="app.quickLogin('staff', 'พี่เจม', 'เจมซ่า')">
-                                    <i class="fa-solid fa-right-to-bracket"></i> พี่เจม
-                                </button>
-                                <button type="button" class="quick-btn btn-staff-quick" onclick="app.quickLogin('staff', 'โต้', 'โต้โยต้า')">
-                                    <i class="fa-solid fa-right-to-bracket"></i> โต้
-                                </button>
-                                <button type="button" class="quick-btn btn-staff-quick" onclick="app.quickLogin('staff', 'ชมพู่', '1111')">
-                                    <i class="fa-solid fa-right-to-bracket"></i> ชมพู่
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="quick-login-group">
-                            <div class="quick-group-title"><i class="fa-solid fa-user-tie"></i> แอดมิน (Admin):</div>
-                            <div class="quick-buttons-row">
-                                <button type="button" class="quick-btn btn-admin-quick" onclick="app.quickLogin('admin', 'พี่บัว', 'เซล่ามูน')">
-                                    <i class="fa-solid fa-shield-halved"></i> พี่บัว
-                                </button>
-                                <button type="button" class="quick-btn btn-admin-quick" onclick="app.quickLogin('admin', 'พี่พลอย', 'ชาบู')">
-                                    <i class="fa-solid fa-shield-halved"></i> พี่พลอย
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="login-footer">
                         <span class="app-version">v2.4.0 (Hospital Intranet Only)</span>
                     </div>
@@ -152,7 +103,7 @@
         <section id="screen-room-selection" class="screen-view">
             <div class="view-header">
                 <h2><i class="fa-solid fa-grip"></i> ตารางเวรปฏิบัติงานประจำเดือนพฤศจิกายน 2569</h2>
-                <p>แสดงตารางเวรรวมของเจ้าหน้าที่พยาบาลและวิชาชีพทั้งหมด 50 ท่าน</p>
+                <p>แสดงตารางเวรรวมของเจ้าหน้าที่พยาบาลและวิชาชีพทั้งหมด</p>
             </div>
 
             <!-- Dashboard Stats Summary -->
@@ -328,8 +279,7 @@
                                 <label for="swap-admin"><i class="fa-solid fa-user-shield"></i> ผู้มีอำนาจอนุมัติ
                                     (Admin)</label>
                                 <select id="swap-admin" required>
-                                    <option value="พี่บัว">พี่บัว</option>
-                                    <option value="พี่พลอย">พี่พลอย</option>
+                                    <option value="" disabled selected>-- เลือกผู้ดูแลระบบ --</option>
                                 </select>
                             </div>
                         </div>
@@ -362,7 +312,7 @@
                 <!-- Staff List Panel -->
                 <div class="admin-panel glass-panel" id="admin-staff-list-panel">
                     <div class="panel-header">
-                        <h3><i class="fa-solid fa-users-medical"></i> รายชื่อพยาบาลและเจ้าหน้าที่ (50 ท่าน)</h3>
+                        <h3><i class="fa-solid fa-users-medical"></i> รายชื่อพยาบาลและเจ้าหน้าที่</h3>
                         <p class="panel-desc">คลิกที่รายชื่อเพื่อตรวจสอบประวัติตารางเวรรายบุคคล</p>
                     </div>
                     <div class="admin-search-bar-row">
@@ -399,55 +349,41 @@
 
         <!-- 5. ADMIN REPORTS SCREEN -->
         <section id="screen-admin-reports" class="screen-view">
-            <div class="view-header flex-header">
-                <div>
-                    <h2><i class="fa-solid fa-file-invoice"></i> หน้ารายงาน (Admin Reports)</h2>
-                    <p>ศูนย์รวมรายงานสรุปผลและการดำเนินงานต่างๆ ในระบบผู้ดูแลระบบ</p>
-                </div>
+            <div class="view-header">
+                <h2><i class="fa-solid fa-file-invoice"></i> รายงานสรุปผลการอนุมัติการแลกภาระงาน</h2>
+                <p>บันทึกประวัติการขอแลกเปลี่ยนเวรที่ได้รับการอนุมัติอย่างเป็นทางการ เพื่อใช้ประกอบการเบิกจ่ายและตรวจสอบ</p>
             </div>
 
-            <!-- Reports Tab Navigation -->
-            <div class="reports-tabs-bar">
-                <button class="reports-tab-btn active" id="tab-report-swap">
-                    <i class="fa-solid fa-arrow-rotate-left"></i> รายงานการแลกภาระงาน
-                </button>
-            </div>
-
-            <!-- Report Card Container -->
-            <div class="reports-card glass-panel">
-                <div class="reports-card-header">
-                    <div class="reports-card-title-group">
-                        <h3><i class="fa-solid fa-clipboard-check"></i> รายงานการแลกภาระงานของพนักงาน</h3>
-                        <p class="panel-desc">แสดงข้อมูลการแลกภาระงานของพนักงานทุกคนที่ได้รับการอนุมัติจากผู้ดูแลระบบ</p>
+            <div class="reports-container glass-panel">
+                <div class="reports-filter-bar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="report-search" placeholder="ค้นหาตามชื่อผู้ขอ, คู่แลก หรือผู้อนุมัติ..." onkeyup="app.filterReports()">
                     </div>
-                    <div class="reports-card-actions">
-                        <div class="admin-search-bar">
-                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                            <input type="text" id="admin-reports-search" placeholder="ค้นหาผู้ขอ, ผู้แลก หรือผู้อนุมัติ..."
-                                onkeyup="app.filterAdminReports()">
-                        </div>
-                        <button class="clear-report-btn" onclick="app.clearSwapReports()">
-                            <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลรายงาน
+                    <div class="report-actions">
+                        <button class="btn-action print-btn" onclick="app.printApprovedReport()">
+                            <i class="fa-solid fa-print"></i> พิมพ์รายงานสรุป
                         </button>
-                        <a href="print_report.html" target="_blank" class="print-page-btn">
-                            <i class="fa-solid fa-print"></i> พิมพ์รายงาน
-                        </a>
+                        <button class="btn-action export-btn" onclick="app.exportReportToCSV()">
+                            <i class="fa-solid fa-file-excel"></i> ส่งออกไฟล์ CSV
+                        </button>
                     </div>
                 </div>
 
-                <!-- Approved Swap Requests Report Table -->
-                <div class="reports-table-wrapper scrollbar-custom">
-                    <table class="reports-table" id="admin-swap-reports-table">
+                <div class="table-responsive-wrapper scrollbar-custom">
+                    <table class="report-data-table" id="approved-reports-table">
                         <thead>
                             <tr>
-                                <th width="22%"><i class="fa-solid fa-users"></i> 1. ผู้ขอ - ผู้แลก</th>
-                                <th width="32%"><i class="fa-solid fa-calendar-minus"></i> 2. ภาระงานก่อน (ภาระงานก่อนแลก)</th>
-                                <th width="32%"><i class="fa-solid fa-calendar-plus"></i> 3. ภาระงานหลัง (ภาระงานหลังแลก)</th>
-                                <th width="14%"><i class="fa-solid fa-user-shield"></i> 4. ผู้อนุมัติ</th>
+                                <th class="col-num">ลำดับ</th>
+                                <th class="col-people">ผู้ขอแลก ➔ คู่แลก</th>
+                                <th class="col-duty-before">ภาระงานเดิมก่อนแลก</th>
+                                <th class="col-duty-after">ภาระงานใหม่หลังแลก</th>
+                                <th class="col-admin">ผู้อนุมัติ / เวลา</th>
+                                <th class="col-status">สถานะ</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-swap-reports-tbody">
-                            <!-- Populated dynamically via JS -->
+                        <tbody id="approved-reports-tbody">
+                            <!-- Populated dynamically -->
                         </tbody>
                     </table>
                 </div>
@@ -456,7 +392,7 @@
 
     </main>
 
-    <!-- FOOTER -->
+    <!-- App Global Footer -->
     <footer class="app-footer">
         <p>&copy; 2026 Sangkhlaburi Hospital Internal Scheduling System. โรงพยาบาลสังขละบุรี. สงวนลิขสิทธิ์.</p>
     </footer>
@@ -474,8 +410,8 @@
             </div>
             <form onsubmit="app.handleLogin(event, 'staff')" class="modal-form">
                 <div class="form-group">
-                    <label for="staff-username">ชื่อเจ้าหน้าที่ (ภาษาไทย)</label>
-                    <input type="text" id="staff-username" placeholder="เช่น พี่เจม, โต้, ชมพู่" required
+                    <label for="staff-username">ชื่อเจ้าหน้าที่</label>
+                    <input type="text" id="staff-username" placeholder="กรอกชื่อเจ้าหน้าที่" required
                         autocomplete="username">
                 </div>
                 <div class="form-group">
@@ -485,14 +421,6 @@
                 </div>
                 <button type="submit" class="modal-submit-btn">เข้าสู่ระบบ <i class="fa-solid fa-sign-in"></i></button>
             </form>
-            <div class="modal-tip">
-                <p><strong><i class="fa-solid fa-bolt"></i> คลิกปุ่มลัดเพื่อกรอกรหัสและเข้าสู่ระบบทันที:</strong></p>
-                <div class="quick-chip-container">
-                    <button type="button" class="quick-chip btn-staff-chip" onclick="app.quickLogin('staff', 'พี่เจม', 'เจมซ่า')">⚡ พี่เจม (เจมซ่า)</button>
-                    <button type="button" class="quick-chip btn-staff-chip" onclick="app.quickLogin('staff', 'โต้', 'โต้โยต้า')">⚡ โต้ (โต้โยต้า)</button>
-                    <button type="button" class="quick-chip btn-staff-chip" onclick="app.quickLogin('staff', 'ชมพู่', '1111')">⚡ ชมพู่ (1111)</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -507,8 +435,8 @@
             </div>
             <form onsubmit="app.handleLogin(event, 'admin')" class="modal-form">
                 <div class="form-group">
-                    <label for="admin-username">ชื่อแอดมิน (ภาษาไทย)</label>
-                    <input type="text" id="admin-username" placeholder="เช่น พี่บัว, พี่พลอย" required
+                    <label for="admin-username">ชื่อผู้ดูแลระบบ</label>
+                    <input type="text" id="admin-username" placeholder="กรอกชื่อผู้ดูแลระบบ" required
                         autocomplete="username">
                 </div>
                 <div class="form-group">
@@ -519,13 +447,6 @@
                 <button type="submit" class="modal-submit-btn admin-btn">เข้าสู่ระบบ <i
                         class="fa-solid fa-lock-open"></i></button>
             </form>
-            <div class="modal-tip">
-                <p><strong><i class="fa-solid fa-bolt"></i> คลิกปุ่มลัดเพื่อกรอกรหัสและเข้าสู่ระบบทันที:</strong></p>
-                <div class="quick-chip-container">
-                    <button type="button" class="quick-chip btn-admin-chip" onclick="app.quickLogin('admin', 'พี่บัว', 'เซล่ามูน')">⚡ พี่บัว (เซล่ามูน)</button>
-                    <button type="button" class="quick-chip btn-admin-chip" onclick="app.quickLogin('admin', 'พี่พลอย', 'ชาบู')">⚡ พี่พลอย (ชาบู)</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -535,7 +456,7 @@
             <button class="modal-close-btn" onclick="app.closeModal('staff-detail-modal')">&times;</button>
             <div class="modal-header flex-modal-header">
                 <div>
-                    <h2 id="detail-nurse-name">ตารางเวรรายบุคคล: พยาบาลสมศรี ดีใจ</h2>
+                    <h2 id="detail-nurse-name">ตารางเวรรายบุคคล</h2>
                     <p id="detail-nurse-dept">ฝ่ายงาน: แผนกห้องฉุกเฉิน</p>
                 </div>
                 <div class="nurse-badge" id="detail-nurse-badge">Staff</div>
@@ -592,31 +513,33 @@
         </div>
     </div>
 
-    <!-- ADD NEW STAFF MODAL -->
+    <!-- ADD NEW USER / STAFF / ADMIN MODAL -->
     <div class="modal-overlay" id="add-staff-modal">
         <div class="modal-card glass-panel anim-scale-up">
             <button class="modal-close-btn" onclick="app.closeModal('add-staff-modal')">&times;</button>
             <div class="modal-header">
                 <i class="fa-solid fa-user-plus modal-icon admin-color"></i>
-                <h2>เพิ่มและสุ่มตารางเวรเจ้าหน้าที่ใหม่</h2>
-                <p>กรอกข้อมูลของเจ้าหน้าที่ใหม่เพื่อเพิ่มเข้าระบบและสุ่มตารางเวร 30 วันโดยอัตโนมัติ</p>
+                <h2>เพิ่มบัญชีผู้ใช้งานใหม่</h2>
+                <p>สร้างบัญชีพนักงาน (Staff) หรือผู้ดูแลระบบ (Admin) เพื่อเข้าใช้งานระบบ</p>
             </div>
             <form onsubmit="app.addNewStaff(event)" class="modal-form">
                 <div class="form-group">
-                    <label for="new-staff-name">ชื่อ-นามสกุล (เช่น พว. สมรัก ดีเด่น)</label>
-                    <input type="text" id="new-staff-name" placeholder="ชื่อ-นามสกุล" required autocomplete="off">
-                </div>
-                <div class="form-group">
-                    <label for="new-staff-dept">แผนกปฏิบัติงานหลัก</label>
-                    <select id="new-staff-dept" required>
-                        <option value="" disabled selected>-- เลือกแผนก --</option>
-                        <option value="ห้องER">ห้อง ER</option>
-                        <option value="ห้องคลอด">ห้องคลอด</option>
-                        <option value="ห้องฉุกเฉิน">ห้องฉุกเฉิน</option>
+                    <label for="new-user-role"><i class="fa-solid fa-id-badge"></i> ประเภทบัญชี</label>
+                    <select id="new-user-role" required>
+                        <option value="staff" selected>พนักงาน/เจ้าหน้าที่ (Staff)</option>
+                        <option value="admin">ผู้ดูแลระบบ (Admin)</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="new-staff-name"><i class="fa-solid fa-user"></i> ชื่อผู้ใช้งาน</label>
+                    <input type="text" id="new-staff-name" placeholder="กรอกชื่อผู้ใช้งาน" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="new-staff-password"><i class="fa-solid fa-lock"></i> รหัสผ่าน</label>
+                    <input type="password" id="new-staff-password" placeholder="กรอกรหัสผ่าน" required autocomplete="new-password">
+                </div>
                 <button type="submit" class="modal-submit-btn admin-btn">
-                    <i class="fa-solid fa-dice"></i> เพิ่มและสุ่มตารางเวร
+                    <i class="fa-solid fa-user-plus"></i> บันทึกและเพิ่มบัญชี
                 </button>
             </form>
         </div>
@@ -637,8 +560,8 @@
                     <label><i class="fa-solid fa-file-csv"></i> ฐานข้อมูล Google Sheet ที่ใช้งานปัจจุบัน:</label>
                     <div class="sheet-url-box">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                        <a href="https://docs.google.com/spreadsheets/d/1rn-iaDgK0Yl_P2JPPND3wZkZQaRAGMrxIhSoZBXhsMY/edit?usp=sharing" target="_blank" id="active-sheet-link">
-                            https://docs.google.com/spreadsheets/d/1rn-iaDgK0Yl_P2JPPND3wZkZQaRAGMrxIhSoZBXhsMY
+                        <a href="https://docs.google.com/spreadsheets/d/1zr9Qtek4BK24wZg1hWh0s0Ui9WGtcP7H3GNJ8ba5kwQ/edit?usp=sharing" target="_blank" id="active-sheet-link">
+                            https://docs.google.com/spreadsheets/d/1zr9Qtek4BK24wZg1hWh0s0Ui9WGtcP7H3GNJ8ba5kwQ
                         </a>
                     </div>
                 </div>
@@ -659,8 +582,8 @@
                     <button type="button" class="btn-gsheet-action success" onclick="app.pushLocalToGoogleSheet()">
                         <i class="fa-solid fa-cloud-arrow-up"></i> ส่งข้อมูลปัจจุบันขึ้น Google Sheet
                     </button>
-                    <button type="button" class="btn-gsheet-action warning" onclick="app.randomizeAllSchedules(true)">
-                        <i class="fa-solid fa-dice"></i> สุ่มเวรพนักงานทั้งหมดใหม่
+                    <button type="button" class="btn-gsheet-action danger" onclick="app.clearGoogleSheetDatabase()" style="background: #dc2626; color: #fff;">
+                        <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลใน Google Sheet ทั้งหมด
                     </button>
                 </div>
 
@@ -669,7 +592,7 @@
                         <i class="fa-solid fa-code"></i> <span>ขั้นตอนติดตั้ง Google Apps Script (ทำเพียงครั้งแรก)</span>
                     </div>
                     <ol class="instructions-list">
-                        <li>เปิดไฟล์ <a href="https://docs.google.com/spreadsheets/d/1rn-iaDgK0Yl_P2JPPND3wZkZQaRAGMrxIhSoZBXhsMY/edit?usp=sharing" target="_blank" style="color: #64ffda;">Google Sheet</a> -> คลิกเมนู <strong>ส่วนขยาย (Extensions)</strong> -> เลือก <strong>Apps Script</strong></li>
+                        <li>เปิดไฟล์ <a href="https://docs.google.com/spreadsheets/d/1zr9Qtek4BK24wZg1hWh0s0Ui9WGtcP7H3GNJ8ba5kwQ/edit?usp=sharing" target="_blank" style="color: #64ffda;">Google Sheet</a> -> คลิกเมนู <strong>ส่วนขยาย (Extensions)</strong> -> เลือก <strong>Apps Script</strong></li>
                         <li>เปิดไฟล์ <code>google_apps_script.js</code> ในโฟลเดอร์โปรเจกต์นี้ คัดลอกโค้ดทั้งหมดไปวางใน <code>Code.gs</code> บน Apps Script</li>
                         <li>กดปุ่ม <strong>บันทึก (Save / รูปแผ่นดิสก์)</strong></li>
                         <li>กดปุ่ม <strong>ทำให้ใช้งานได้ (Deploy)</strong> มุมขวาบน -> เลือก <strong>การทำให้ใช้งานได้ใหม่ (New deployment)</strong></li>
